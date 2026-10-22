@@ -334,7 +334,7 @@ function resize(){DPR=Math.min(3,window.devicePixelRatio||1);W=innerWidth;H=inne
 addEventListener('resize',resize);resize();
 function S(){const s=safeArea();SAFE=s;return{l:s.l,t:s.t,r:W-s.r,b:H-s.b,w:W-s.l-s.r,h:H-s.t-s.b}}
 function font(sz,b){return (b===false?'':'bold ')+Math.round(sz)+'px '+FONT}
-function fit(text,maxW,sz,b){ctx.font=font(sz,b);let w=ctx.measureText(text).width;if(w>maxW){sz=Math.max(8,sz*maxW/w);ctx.font=font(sz,b);w=ctx.measureText(text).width}return{sz,w}}
+function fit(text,maxW,sz,b){ctx.font=font(sz,b);let w=ctx.measureText(text).width;if(w>maxW){sz=Math.max(Math.min(sz,16),sz*maxW/w);ctx.font=font(sz,b);w=ctx.measureText(text).width}return{sz,w}}
 function txt(k,text,x,y,sz,col,align,maxW,opt){opt=opt||{};const f=fit(text,maxW||9999,sz,opt.bold);ctx.textAlign=align||'center';ctx.textBaseline='middle';
  if(opt.outline!==false){ctx.lineJoin='round';ctx.lineWidth=Math.max(2,f.sz*.18);ctx.strokeStyle=opt.oc||'rgba(0,0,20,.85)';ctx.strokeText(text,x,y)}ctx.fillStyle=col||'#fff';ctx.fillText(text,x,y);ctx.textBaseline='alphabetic';
  const x0=align==='left'?x:align==='right'?x-f.w:x-f.w/2;if(k)reg('txt:'+k,x0,y-f.sz*.6,f.w,f.sz*1.2);return f}
@@ -450,7 +450,7 @@ const lowF=G.fuel<25&&Math.floor(TIME*4)%2;ctx.fillStyle='rgba(0,0,0,.55)';rr(fx
  if(G.st.k==='fort'){const w=G.walls.find(w=>!w.passed&&w.z>s.z-.3&&w.z-s.z<14);if(w){for(const [a0,a1] of freeAlts(w,s.x)){ctx.fillStyle='rgba(77,255,122,.45)';ctx.fillRect(ax+3,yOf(a1),aw-6,yOf(a0)-yOf(a1))}}}
  ctx.strokeStyle='rgba(255,255,255,.5)';ctx.lineWidth=1;for(let k=0;k<=ALTMAX;k++){const y=yOf(k);ctx.beginPath();ctx.moveTo(ax+2,y);ctx.lineTo(ax+8,y);ctx.stroke()}
  const my=yOf(s.alt);poly([[ax+aw+7,my],[ax+aw-4,my-7],[ax+aw-4,my+7]],'#7fd4ff','#fff',1.5);ctx.fillStyle='#7fd4ff';ctx.fillRect(ax+3,my-1.5,aw-6,3);
- ctx.strokeStyle='#bfe6ff';ctx.lineWidth=1.5;rr(ax,ay,aw,ah,6);ctx.stroke();txt('altL','ALT',ax+aw/2+2,ay+ah+14,18,'#bfe6ff');reg('alt',ax,ay,aw+8,ah);}
+ ctx.strokeStyle='#bfe6ff';ctx.lineWidth=1.5;rr(ax,ay,aw,ah,6);ctx.stroke();txt('altL','ALT',ax+aw/2+2,ay+ah+15,20,'#bfe6ff',null,60,{oc:'rgba(0,0,20,.85)'});reg('alt',ax,ay,aw+8,ah);}
  // pause + mute
  iconBtn('pause',o.pause,'⏸',()=>go('pause'));iconBtn('mute',o.mute,muted?'🔇':'🔊',toggleMute);
  // boss bar
@@ -459,7 +459,9 @@ const lowF=G.fuel<25&&Math.floor(TIME*4)%2;ctx.fillStyle='rgba(0,0,0,.55)';rr(fx
  if(G.st.k==='space'){txt(null,'Raiders '+Math.min(G.kills,G.need)+' / '+G.need,o.s.l+o.s.w/2,o.top+12,17,'#ffd0a0')}
  // swipe feedback (anchor ring + direction) and first-time hint
  if(JOY.active){ctx.globalAlpha=.55;ctx.strokeStyle='#8fd0ff';ctx.lineWidth=3;ctx.beginPath();ctx.arc(JOY.sx,JOY.sy,26,0,6.283);ctx.stroke();if(Math.hypot(JOY.dx,JOY.dy)>.2){const ex=JOY.sx+JOY.dx*44,ey=JOY.sy+JOY.dy*44;ctx.beginPath();ctx.moveTo(JOY.sx,JOY.sy);ctx.lineTo(ex,ey);ctx.stroke();circ(ex,ey,9,'#8fd0ff')}ctx.globalAlpha=1}
- else if(!SWIPED||G.t<4){const hx=o.s.l+Math.min(o.s.w*.28,150),hy=o.b1[1]-10;ctx.globalAlpha=.85;[walk?'👆 Swipe ◀ ▶':'👆 Swipe to steer',walk?'to run':'▲ up / ▼ down = height'].forEach((l,i)=>txt(null,l,hx,hy+i*22,17,'#fff',null,o.s.w*.5,{oc:'rgba(0,0,0,.75)'}));ctx.globalAlpha=1}
+ else if(!SWIPED||G.t<4){const HL=walk?['👆 Swipe ◀ ▶','to run']:['👆 Swipe to steer','▲ up / ▼ down = height'],HS=20;ctx.font=font(HS);const need=Math.max(...HL.map(l=>ctx.measureText(l).width))+8;
+  const a0=o.s.l+8,a1=o.b2[0]-o.b2[2]-8;let hx,hy;if(a1-a0>=need){hx=a0+(a1-a0)/2;hy=o.b1[1]-12}else{hx=o.s.l+o.s.w/2;hy=o.ctrlTop-HS*2.2}
+  ctx.globalAlpha=.9;HL.forEach((l,i)=>txt(null,l,hx,hy+i*(HS+5),HS,'#fff',null,o.s.w-16,{oc:'rgba(0,0,0,.8)'}));ctx.globalAlpha=1}
  const rb=(c,id,label,col,down)=>{const [x,y,r]=c;circ(x,y+3,r,'rgba(0,0,0,.35)');circ(x,y+(down?3:0),r,col);ctx.strokeStyle='#cfe8ff';ctx.lineWidth=3;ctx.beginPath();ctx.arc(x,y+(down?3:0),r,0,6.283);ctx.stroke();txt(null,label,x,y+(down?3:0),Math.max(17,Math.min(22,r*.4)),'#fff',null,Math.max(r*1.9,92));reg('btn:'+id,x-r,y-r,r*2,r*2+3)};
  if(walk){rb(o.b1,'jump','JUMP',BTNP.jump?'#2fb56a':'rgba(31,157,85,.85)',BTNP.jump);rb(o.b2,'lazord','LAZORD',BTNP.lazord?'#18a9c9':'rgba(20,140,190,.85)',BTNP.lazord)}
  else{const fdown=!!FIREP||KEYS.fire;rb(o.b1,'fire','FIRE',fdown?'#2a7bd9':'rgba(42,110,217,.85)',fdown);rb(o.b2,'auto','',AUTO?'#1f9d55':'rgba(40,40,70,.85)',false);txt(null,'AUTO',o.b2[0],o.b2[1]-9,17,'#fff');txt(null,AUTO?'ON':'OFF',o.b2[0],o.b2[1]+11,16,AUTO?'#d8ffd8':'#c8c8e0')}
@@ -476,10 +478,10 @@ function drawPlay(){const o=hudLayout();if(G.st.k==='walk')drawWalk(o);else{setC
  if(state==='intro'){const s=o.s,st=G.st;const lx=G.st.k==='walk'?s.l+15:Math.max(s.l+15,o.alt[0]+o.alt[2]+16),aw=s.r-15-lx;const pw=Math.min(aw,440),ph=Math.min(176,s.h*.42),px=lx+(aw-pw)/2;let py=s.t+s.h*.36-ph/2;
   if(G.story){const one=s.h<500,sz=one?Math.max(20,Math.min(26,aw/22)):Math.max(22,Math.min(32,aw/12)),need=one?sz*1.5+12:sz*2.7+14;py=Math.max(py,o.top+need);
    if(one)txt('story1','Jim is searching for the precious Light Ring!',lx+aw/2,py-12-sz*.6,sz,'#fff6c8',null,aw,{oc:'#1a3a6a'});
-   else{txt('story1','Jim is searching for the',lx+aw/2,py-14-sz*1.95,sz,'#fff',null,aw);txt('story2','precious Light Ring!',lx+aw/2,py-14-sz*.6,sz*1.1,'#fff6c8',null,aw,{oc:'#1a3a6a'})}}ctx.fillStyle='rgba(8,12,40,.82)';rr(px,py,pw,ph,16);ctx.fill();ctx.strokeStyle='#8fd0ff';ctx.lineWidth=2;ctx.stroke();
-  const r=ph*.3;drawJim(px+14+r,py+ph/2,r,'head');ctx.strokeStyle='#8fd0ff';ctx.beginPath();ctx.arc(px+14+r,py+ph/2,r,0,6.283);ctx.stroke();
-  const tx=px+28+r*2,tw=pw-(tx-px)-12;txt('stg','STAGE '+(G.si+1)+(G.loop?'  ·  LOOP '+(G.loop+1):''),tx,py+ph*.17,Math.max(16,Math.min(18,ph*.11)),'#9fc4ff','left',tw);
-  txt('stn',st.n.toUpperCase(),tx,py+ph*.36,Math.min(26,ph*.17),'#ffe14a','left',tw);const ls=wrap('"'+st.sub+'"',tw,17,false);ls.slice(0,3).forEach((l,i)=>txt('sts'+i,l,tx,py+ph*.56+i*21,17,'#fff','left',tw,{bold:false}))}
+   else{txt('story1','Jim is searching for the',lx+aw/2,py-14-sz*1.95,sz,'#fff',null,aw);txt('story2','precious Light Ring!',lx+aw/2,py-14-sz*.6,sz*1.1,'#fff6c8',null,aw,{oc:'#1a3a6a'})}}const r=Math.min(ph*.3,54),tx0=px+28+r*2,tw0=pw-(tx0-px)-22,qL=wrap('"'+st.sub+'"',tw0,17,false),ph2=Math.max(ph,ph*.56+qL.length*21+18);ctx.fillStyle='rgba(8,12,40,.82)';rr(px,py,pw,ph2,16);ctx.fill();ctx.strokeStyle='#8fd0ff';ctx.lineWidth=2;ctx.stroke();
+  drawJim(px+14+r,py+ph/2,r,'head');ctx.strokeStyle='#8fd0ff';ctx.beginPath();ctx.arc(px+14+r,py+ph/2,r,0,6.283);ctx.stroke();
+  const tx=tx0,tw=tw0;txt('stg','STAGE '+(G.si+1)+(G.loop?'  ·  LOOP '+(G.loop+1):''),tx,py+ph*.17,Math.max(16,Math.min(18,ph*.11)),'#9fc4ff','left',tw);
+  txt('stn',st.n.toUpperCase(),tx,py+ph*.36,Math.min(26,ph*.17),'#ffe14a','left',tw);const ls=qL;ls.forEach((l,i)=>txt('sts'+i,l,tx,py+ph*.56+i*21,17,'#fff','left',tw,{bold:false}))}
  if(state==='clear'){const s=o.s,cx=s.l+s.w/2,fin=G.st.fin,big=Math.min(40,s.w/10);let y=s.t+s.h*.3;
   ctx.fillStyle='rgba(8,12,40,.72)';rr(s.l+12,y-big-6,s.w-24,big*2.2+Math.min(130,s.h*.22)+60,18);ctx.fill();
   txt('clr',fin?'LIGHT RING FOUND!':'STAGE CLEAR!',cx,y,big,'#ffe14a',null,s.w-40);y+=big*.95;
@@ -517,7 +519,7 @@ cv.addEventListener('pointerdown',e=>{e.preventDefault();audioInit();const x=e.c
   if(inCircle(o.b1,x,y,14)){if(walk){INPUT.jumpE=true;BTNP.jump=true;PTR[e.pointerId]={k:'jump'}}else{FIREP=e.pointerId;INPUT.fire=true;PTR[e.pointerId]={k:'fire'}}return}
   if(inCircle(o.b2,x,y,10)){if(walk){INPUT.strikeE=true;BTNP.lazord=true;PTR[e.pointerId]={k:'lazord'}}else{toggleAuto();PTR[e.pointerId]={k:'auto'}}return}
   // swipe-to-move: a finger down anywhere else steers (flying: left/right + height; on foot: run left/right)
-  if(!JOY.active){Object.assign(JOY,{active:true,id:e.pointerId,bx:x,by:y,sx:x,sy:y,dx:0,dy:0,seg:false});PTR[e.pointerId]={k:'joy'}}
+  if(!JOY.active){Object.assign(JOY,{active:true,id:e.pointerId,bx:x,by:y,sx:x,sy:y,dx:0,dy:0,seg:false,t0:performance.now()});PTR[e.pointerId]={k:'joy'};if(G.J)G.J.carryT=0}
   return}
  const b=hitBtn(x,y);if(b){PTR[e.pointerId]={k:'btn',b};BTNDOWN=b.id}},{passive:false});
 function joyMove(x,y){// same as Chef Kelly: once the finger travels SW_STEP px from its anchor, set the direction (atan2) and re-anchor
@@ -527,7 +529,10 @@ function joyMove(x,y){// same as Chef Kelly: once the finger travels SW_STEP px 
  else if(JOY.seg&&d>SW_DEAD){const a=Math.atan2(dy,dx),b=Math.atan2(JOY.dy,JOY.dx);let da=a-b;while(da>Math.PI)da-=6.283;while(da<-Math.PI)da+=6.283;if(Math.abs(da)<2.2){const c=b+da*.5;JOY.dx=Math.cos(c);JOY.dy=Math.sin(c)}}}
 cv.addEventListener('pointermove',e=>{if(JOY.active&&e.pointerId===JOY.id){e.preventDefault();joyMove(e.clientX,e.clientY)}},{passive:false});
 function ptrUp(e){const p=PTR[e.pointerId];delete PTR[e.pointerId];if(!p)return;
- if(p.k==='joy'){JOY.active=false;JOY.dx=JOY.dy=0}else if(p.k==='fire'){FIREP=null;INPUT.fire=false}else if(p.k==='jump')BTNP.jump=false;else if(p.k==='lazord')BTNP.lazord=false;
+ if(p.k==='joy'){// on foot: a quick flick keeps Jim running for a moment (run carry); a long hold gets a short glide
+  if(G&&G.J&&G.st&&G.st.k==='walk'&&state==='play'&&e.type==='pointerup'){const ddx=e.clientX-JOY.sx,ddy=e.clientY-JOY.sy,held=performance.now()-(JOY.t0||0);
+   if(Math.abs(ddx)>=SW_DEAD&&Math.abs(ddx)>=Math.abs(ddy)*.6){G.J.carryDir=Math.sign(ddx);if(held<300)G.J.carryT=.6}}
+  JOY.active=false;JOY.dx=JOY.dy=0}else if(p.k==='fire'){FIREP=null;INPUT.fire=false}else if(p.k==='jump')BTNP.jump=false;else if(p.k==='lazord')BTNP.lazord=false;
  else if(p.k==='btn'){BTNDOWN=null;const x=e.clientX,y=e.clientY,b=p.b;if(e.type==='pointerup'&&x>=b.x-6&&x<=b.x+b.w+6&&y>=b.y-6&&y<=b.y+b.h+6){sfx('click');b.cb()}}}
 cv.addEventListener('pointerup',ptrUp);cv.addEventListener('pointercancel',ptrUp);
 ['touchstart','touchmove','touchend','gesturestart','contextmenu'].forEach(ev=>cv.addEventListener(ev,e=>{if(e.cancelable)e.preventDefault()},{passive:false}));
@@ -537,13 +542,13 @@ function resetInput(){for(const k in KEYS)KEYS[k]=false;for(const k in PTR)delet
 cv.addEventListener('touchcancel',resetInput);addEventListener('blur',resetInput);document.addEventListener('visibilitychange',()=>{if(document.hidden)resetInput()});
 const KM={ArrowLeft:'l',KeyA:'l',ArrowRight:'r',KeyD:'r',ArrowUp:'u',KeyW:'u',ArrowDown:'d',KeyS:'d',Space:'fire',KeyJ:'fire',KeyK:'fire',KeyZ:'fire',KeyX:'fire'};
 addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'))return;const k=KM[e.code];audioInit();
- if(k){KEYS[k]=true;e.preventDefault()}
+ if(k){if(!KEYS[k])KEYS['t_'+k]=performance.now();KEYS[k]=true;e.preventDefault()}
  if(G&&G.st&&G.st.k==='walk'&&state==='play'&&!e.repeat){if(e.code==='Space'||e.code==='ArrowUp'||e.code==='KeyW')INPUT.jumpE=true;if(e.code==='KeyJ'||e.code==='KeyK'||e.code==='KeyZ'||e.code==='KeyX')INPUT.strikeE=true}
  if(e.code==='KeyF'&&(state==='play'||state==='intro'))toggleAuto();
  if(e.code==='KeyM')toggleMute();
  if((e.code==='KeyP'||e.code==='Escape')){if(state==='play'||state==='intro')go('pause');else if(state==='pause')go('play')}
  if(e.code==='Enter'||(e.code==='Space'&&state!=='play')){if(state==='title')startGame();else if(state==='over')startGame();else if(state==='win')startStage(G.si+1);else if(state==='intro')G.introT=0;else if(state==='pause')go('play')}});
-addEventListener('keyup',e=>{const k=KM[e.code];if(k)KEYS[k]=false});
+addEventListener('keyup',e=>{const k=KM[e.code];if(k){KEYS[k]=false;if((k==='l'||k==='r')&&G&&G.J&&G.st&&G.st.k==='walk'&&state==='play'&&performance.now()-(KEYS['t_'+k]||0)<300){G.J.carryDir=k==='r'?1:-1;G.J.carryT=.35}}});
 function keyInput(){let x=JOY.dx,y=-JOY.dy;if(Math.hypot(x,y)<.12){x=0;y=0}
  const kx=(KEYS.r?1:0)-(KEYS.l?1:0),ky=(KEYS.u?1:0)-(KEYS.d?1:0);if(kx||ky){x=kx;y=ky}
  INPUT.x=x;INPUT.y=y;INPUT.fire=!!(KEYS.fire||FIREP)}
@@ -658,6 +663,7 @@ function updateWalk(dt){const J=G.J;G.wt+=dt;
  if(window.__BOT){const b=walkBot();ix=b.x;jump=b.j;strike=b.s}
  if(J.dead>0){J.dead-=dt;if(J.dead<=0)walkRespawn();updateWalkFoes(dt);return}
  ix=Math.abs(ix)<.18?0:Math.sign(ix)*Math.min(1,Math.abs(ix)*1.25);
+ if(J.carryT>0){J.carryT-=dt;if(ix&&Math.sign(ix)!==J.carryDir)J.carryT=0;else if(!ix&&!(typeof JOY!=='undefined'&&JOY.active))ix=J.carryDir*Math.min(1,J.carryT/.12+.15)}
  J.vx+=(ix*WK.run-J.vx)*Math.min(1,dt*(J.on?14:8));if(ix)J.dir=ix>0?1:-1;
  if(jump)J.jb=.15;J.jb-=dt;J.coy=J.on?.1:J.coy-dt;
  if(J.jb>0&&J.coy>0){J.vy=WK.jv;J.on=false;J.coy=0;J.jb=0;sfx('jump');wburst(J.x,J.y,5,'#cfd6e8',2)}
@@ -666,7 +672,7 @@ function updateWalk(dt){const J=G.J;G.wt+=dt;
  const py=J.y;J.y+=J.vy*dt;J.on=false;
  for(const s of G.wS){if(J.x+WK.pw>s.x0&&J.x-WK.pw<s.x1&&J.y<s.y1&&J.y+WK.ph>s.y0){if(J.vy<=0&&py>=s.y1-.08){J.y=s.y1;J.vy=0;J.on=true}else if(J.vy>0){J.y=s.y0-WK.ph;J.vy=0}}}
  if(J.vy<=0)for(const p of G.wP){if(J.x+WK.pw*.6>p.x0&&J.x-WK.pw*.6<p.x1&&py>=p.y-.02&&J.y<=p.y){J.y=p.y;J.vy=0;J.on=true}}
- J.swCd-=dt;if(strike&&J.swCd<=0){J.sw=.3;J.swCd=.34;sfx('swing')}J.sw=Math.max(0,J.sw-dt);J.inv=Math.max(0,J.inv-dt);J.anim+=Math.abs(J.vx)*dt;
+ J.swCd-=dt;if(strike&&J.swCd<=0){J.sw=.3;J.swv=.45;J.swCd=.34;sfx('swing')}J.sw=Math.max(0,J.sw-dt);J.swv=Math.max(0,(J.swv||0)-dt);J.inv=Math.max(0,J.inv-dt);J.anim+=Math.abs(J.vx)*dt;
  if(J.y<-5){walkDie('Watch your step!');return}
  for(const c of G.wCK)if(!c.on&&J.x>c.x){c.on=true;J.ck=c;msg('Checkpoint!',1.2);sfx('fuel')}
  for(const c of G.wC)if(!c.got&&Math.abs(c.x-J.x)<.55&&c.y>J.y-.2&&c.y<J.y+WK.ph+.3){c.got=true;wpop(PTS.crystal,c.x,c.y);wburst(c.x,c.y,6,'#8ff4ff',2.5);sfx('crystal')}
@@ -688,9 +694,9 @@ function updateWalkFoes(dt){const J=G.J,alive=J.dead<=0,sb=J.sw>.05&&alive?swing
   if(alive&&J.inv<=0&&Math.abs(o.x-J.x)<WK.pw+.12&&o.y>J.y&&o.y<J.y+WK.ph){o.life=0;walkDie('Hit by a drone shot!');return}
   if(walkSolidHit(o.x,o.y,.05,.05))o.life=0}
  G.wO=G.wO.filter(o=>o.life>0)}
-function walkDie(why){const J=G.J;if(J.dead>0)return;J.dead=1.6;G.lives--;wburst(J.x,J.y+1,26,'#9fe0ff',5);wburst(J.x,J.y+1,14);sfx('die');G.shake=.8;G.hitFlash=1;msg(why,1.8)}
+function walkDie(why){const J=G.J;if(J.dead>0)return;J.carryT=0;J.dead=1.6;G.lives--;wburst(J.x,J.y+1,26,'#9fe0ff',5);wburst(J.x,J.y+1,14);sfx('die');G.shake=.8;G.hitFlash=1;msg(why,1.8)}
 function walkRespawn(){const J=G.J;if(G.lives<=0){state='over';save.hi=Math.max(save.hi||0,G.score);persist();sfx('over');musicFor(null);return}
- const c=J.ck;Object.assign(J,{x:c.x,y:c.y+.05,vx:0,vy:0,dir:1,on:false,inv:2.2,sw:0,dead:0});G.wO=[];
+ const c=J.ck;Object.assign(J,{x:c.x,y:c.y+.05,vx:0,vy:0,dir:1,on:false,inv:2.2,sw:0,swv:0,carryT:0,dead:0});G.wO=[];
  for(const e of G.wE)if(!e.dead&&Math.abs(e.x-c.x)<3){if(e.k==='drone')e.t+=3;else e.x=e.b}msg('Get ready!',1.2)}
 // test/demo bot: run right, jump gaps/walls/foes, swing at anything close
 function walkBot(){const J=G.J;let j=false,s=false;const ahead=J.x+.9;
@@ -737,7 +743,7 @@ function drawWalk(o){const J=G.J,th=G.theme,{T,base}=walkView(o),s=o.s;const vis
    ctx.fillStyle='#bfc6d6';ctx.fillRect(x-T*.03,y-h-T*.25,T*.06,T*.25);circ(x,y-h-T*.27,T*.07,big?'#ffcf3a':'#ff6a6a')}}
  for(const o of G.wO){const x=X(o.x),y=Y(o.y);ctx.save();ctx.shadowColor='#ff5ad8';ctx.shadowBlur=T*.4;circ(x,y,T*.14,'#ff9ae8');circ(x,y,T*.06,'#fff');ctx.restore()}
  // Jim
- if(J.dead<=0&&!(J.inv>0&&Math.floor(TIME*12)%2))drawFootJim(X(J.x),Y(J.y),T,J);
+ if(J.dead<=0&&(J.swv>0||!(J.inv>0&&Math.floor(TIME*12)%2)))drawFootJim(X(J.x),Y(J.y),T,J);
  // particles and pops
  for(const p of G.wp){ctx.globalAlpha=clamp(p.life*2,0,1);ctx.fillStyle=p.c;ctx.fillRect(X(p.x)-T*.06,Y(p.y)-T*.06,T*.12,T*.12)}ctx.globalAlpha=1;
  for(const p of G.pops)if(p.wx!=null){ctx.globalAlpha=clamp(p.t*1.5,0,1);txt(null,'+'+p.n,X(p.wx),Y(p.wy)-(1-p.t)*T*1.2-T*.3,17,'#ffe14a');ctx.globalAlpha=1}
@@ -755,7 +761,11 @@ function drawFootJim(x,y,T,J){const u=T/10,d=J.dir;ctx.save();ctx.translate(Math
  // Lazord + front arm
  let a0;if(J.sw>0){const p=1-J.sw/.3;a0=-2.1+p*2.6}else a0=air?-1.9:-1.35+Math.sin(TIME*2)*.04;
  const hx=2.6*u,hy=-8.6*u,L=T*1.35,bx=hx+Math.cos(a0)*L,by=hy+Math.sin(a0)*L;
- if(J.sw>0){const p=1-J.sw/.3;ctx.fillStyle='rgba(120,220,255,'+(.35*(1-p*.6))+')';ctx.beginPath();ctx.moveTo(hx,hy);ctx.arc(hx,hy,L*1.02,-2.1,a0);ctx.closePath();ctx.fill()}
+ if(J.swv>0){// bright sweep: filled fan + glowing white-cyan arc along the blade tip, fading out after the swing (0.45 s total)
+  const a1=J.sw>0?a0:.5,fade=J.sw>0?1:J.swv/.15;ctx.save();ctx.globalAlpha=clamp(fade,0,1);
+  ctx.fillStyle='rgba(140,235,255,.45)';ctx.beginPath();ctx.moveTo(hx,hy);ctx.arc(hx,hy,L*1.05,-2.1,a1);ctx.closePath();ctx.fill();
+  ctx.shadowColor='#7ff0ff';ctx.shadowBlur=T*.5;ctx.lineCap='round';ctx.strokeStyle='rgba(120,240,255,.95)';ctx.lineWidth=Math.max(5,u*2.6);ctx.beginPath();ctx.arc(hx,hy,L*1.0,-2.1,a1);ctx.stroke();
+  ctx.strokeStyle='#ffffff';ctx.lineWidth=Math.max(2,u*1.1);ctx.beginPath();ctx.arc(hx,hy,L*1.0,-2.1,a1);ctx.stroke();ctx.restore()}
  lazord(hx,hy,bx,by,Math.max(2,u*.9));
  ctx.fillStyle='#5a3820';ctx.fillRect(1.2*u,-11.4*u,1.9*u,2.6*u);ctx.fillStyle='#f1b895';circ(hx,hy,u*.9,'#f1b895');
  // head (pixel likeness)
