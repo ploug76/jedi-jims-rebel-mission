@@ -1,5 +1,5 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>Jedi Jim&#x27;s Rebel Mission</title><!--og--><meta name="description" content="Fly Jedi Jim&#x27;s rebel starfighter into enemy fortresses! Judge your altitude by your shadow, slip through walls and force fields, shoot fuel tanks to stay airborne, win space dogfights and blast giant boss robots in this 1982-style isometric space shooter."><meta property="og:type" content="website"><meta property="og:site_name" content="Peter&#x27;s Arcade"><meta property="og:title" content="Jedi Jim&#x27;s Rebel Mission"><meta property="og:description" content="Fly Jedi Jim&#x27;s rebel starfighter into enemy fortresses! Judge your altitude by your shadow, slip through walls and force fields, shoot fuel tanks to stay airborne, win space dogfights and blast giant boss robots in this 1982-style isometric space shooter."><meta property="og:url" content="https://ploug76.github.io/jedi-jims-rebel-mission/"><meta property="og:image" content="https://ploug76.github.io/jedi-jims-rebel-mission/cover.png"><meta property="og:image:secure_url" content="https://ploug76.github.io/jedi-jims-rebel-mission/cover.png"><meta property="og:image:type" content="image/png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Jedi Jim&#x27;s Rebel Mission game cover with Jedi Jim"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Jedi Jim&#x27;s Rebel Mission"><meta name="twitter:description" content="Fly Jedi Jim&#x27;s rebel starfighter into enemy fortresses! Judge your altitude by your shadow, slip through walls and force fields, shoot fuel tanks to stay airborne, win space dogfights and blast giant boss robots in this 1982-style isometric space shooter."><meta name="twitter:image" content="https://ploug76.github.io/jedi-jims-rebel-mission/cover.png"><!--/og-->
+<title>Jedi Jim&#x27;s Rebel Mission</title><!--og--><meta name="description" content="Jim is searching for the precious Light Ring! Fly his starfighter through enemy fortresses and space dogfights, then run, jump and swing his glowing Lazord on foot to win every piece of the ring in this retro arcade adventure."><meta property="og:type" content="website"><meta property="og:site_name" content="Peter&#x27;s Arcade"><meta property="og:title" content="Jedi Jim&#x27;s Rebel Mission"><meta property="og:description" content="Jim is searching for the precious Light Ring! Fly his starfighter through enemy fortresses and space dogfights, then run, jump and swing his glowing Lazord on foot to win every piece of the ring in this retro arcade adventure."><meta property="og:url" content="https://ploug76.github.io/jedi-jims-rebel-mission/"><meta property="og:image" content="https://ploug76.github.io/jedi-jims-rebel-mission/cover.png"><meta property="og:image:secure_url" content="https://ploug76.github.io/jedi-jims-rebel-mission/cover.png"><meta property="og:image:type" content="image/png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Jedi Jim&#x27;s Rebel Mission game cover with Jedi Jim"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Jedi Jim&#x27;s Rebel Mission"><meta name="twitter:description" content="Jim is searching for the precious Light Ring! Fly his starfighter through enemy fortresses and space dogfights, then run, jump and swing his glowing Lazord on foot to win every piece of the ring in this retro arcade adventure."><meta name="twitter:image" content="https://ploug76.github.io/jedi-jims-rebel-mission/cover.png"><!--/og-->
 <meta name="theme-color" content="#0a1638"><link rel="manifest" href="manifest.json"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Jedi Jim">
 <style>html,body{margin:0;height:100%;overflow:hidden;background:#05061a;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;overscroll-behavior:none}
@@ -20,24 +20,28 @@ const LANE=8,ALTMAX=5,ALTMIN=.25,XMIN=.45,XMAX=7.55;
 const STAGES=[
  {n:'Outer Wall',k:'fort',len:230,dens:0,boss:0,sub:'Fly into the fortress. Get low to shoot the fuel tanks!'},
  {n:'Asteroid Reach',k:'space',kills:10,dens:0,sub:'Raiders incoming! Match their height to hit them.'},
+ {n:'Hangar Run',k:'walk',wi:0,len:95,sub:'On foot! Jump the gaps and swing your Lazord at the scrap bots.'},
  {n:'Ion Citadel',k:'fort',len:250,dens:1,boss:1,sub:'Force fields ahead, and the Warden robot guards the end.'},
  {n:'Nebula Gauntlet',k:'space',kills:14,dens:1,sub:'A bigger raider squadron. Dodge their shots!'},
+ {n:'Crystal Caverns',k:'walk',wi:1,len:115,sub:'Leap across the cavern ledges. Your Lazord knocks back drone shots!'},
  {n:'Forge Deck',k:'fort',len:280,dens:2,boss:0,sub:'Missile silos and gun turrets everywhere. Watch your fuel!'},
  {n:'Comet Run',k:'space',kills:18,dens:2,sub:'The last squadron before the stronghold.'},
  {n:'Iron Stronghold',k:'fort',len:300,dens:3,boss:2,sub:'The Overlord robot waits at the end. Hit its glowing core!'},
+ {n:'Light Ring Vault',k:'walk',wi:2,len:135,fin:1,sub:'The Light Ring is hidden at the end of the vault. Go get it, Jim!'},
 ];
+const RINGN=STAGES.length;
 const NST=STAGES.length;
-const PTS={fuel:300,turret:200,radar:1000,silo:150,missile:300,raider:500,ace:800,boss:5000};
+const PTS={crystal:50,bot:300,brute:600,drone:500,orb:100,fuel:300,turret:200,radar:1000,silo:150,missile:300,raider:500,ace:800,boss:5000};
 function rng(s){return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 const clamp=(v,a,b)=>v<a?a:v>b?b:v,lerp=(a,b,t)=>a+(b-a)*t;
 function stageOf(si){return STAGES[si%NST]}
-function newGame(){G={score:0,lives:3,si:0,nextLife:20000,pops:[],msgs:[]};startStage(0)}
+function newGame(){G={score:0,lives:3,si:0,nextLife:20000,pops:[],msgs:[]};startStage(0);G.introT=4.6;G.story=1}
 function startStage(si){
  const st=stageOf(si),loop=Math.floor(si/NST);
  Object.assign(G,{si,st,loop,d:st.dens+loop*1.6,speed:Math.min(9,6+loop*.8),t:0,objs:[],walls:[],bolts:[],shots:[],parts:[],enemies:[],boss:null,bossOn:false,
-  fireT:0,clearT:0,kills:0,need:0,spawnT:1.2,lastSafe:0,fz0:-1e9,fz1:-1e9,endZ:1e9,bossZ:0,introT:2.6,lowT:0,hitFlash:0,shake:0});
- G.ship={x:4,alt:2.2,z:0,vx:0,va:0,bank:0,alive:true,inv:0,deadT:0};G.fuel=100;
- if(st.k==='fort')genFort(st,si);else{G.need=st.kills+loop*3;G.endZ=1e9}
+  fireT:0,clearT:0,kills:0,need:0,spawnT:4,lastSafe:0,fz0:-1e9,fz1:-1e9,endZ:1e9,bossZ:0,introT:2.6,lowT:0,hitFlash:0,shake:0});
+ G.ship={x:4,alt:2.2,z:0,vx:0,va:0,bank:0,alive:true,inv:0,deadT:0};G.fuel=100;G.story=0;
+ if(st.k==='walk')genWalk(st,si);else if(st.k==='fort')genFort(st,si);else{G.need=st.kills+loop*3;G.endZ=1e9}
  state='intro';if(typeof musicFor==='function')musicFor(st.k)}
 // ---------- fortress generator (deterministic per stage + loop) ----------
 function brickWall(z,h,gx,gw,ent){const b=[];if(gx>0)b.push({x0:-.2,x1:gx,y0:0,y1:h,f:0});if(gx+gw<LANE)b.push({x0:gx+gw,x1:LANE+.2,y0:0,y1:h,f:0});return{z,b,k:'brick',ent}}
@@ -45,7 +49,7 @@ function windowWall(z,wx,ww,wa,wh,ent){const T=99;return{z,k:'window',ent,b:[{x0
 function fieldWall(z,lo,hi){return{z,k:'field',b:[{x0:-.2,x1:LANE+.2,y0:lo,y1:hi,f:1}]}}
 function genFort(st,si){
  const R=rng(si*7919+13),d=G.d,sp=G.speed;
- const gate=12;G.fz0=gate-1;
+ const gate=12+sp*3;G.fz0=gate-1;   // ~3 s of open flying before the first wall
  G.walls.push(windowWall(gate,2.4,3.2,.3,2.6,1));
  let z=gate+12,n=0;const gapZ=Math.max(sp*1.7,10.5-d*.35);
  const end=st.len;
@@ -91,9 +95,10 @@ function update(dt){
  for(const p of G.parts){p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;p.vy-=4*dt;p.life-=dt}G.parts=G.parts.filter(p=>p.life>0&&p.y>-.5);
  for(const p of G.pops)p.t-=dt*.8;G.pops=G.pops.filter(p=>p.t>0);for(const m of G.msgs)m.life-=dt;G.msgs=G.msgs.filter(m=>m.life>0);
  G.hitFlash=Math.max(0,G.hitFlash-dt*2);G.shake=Math.max(0,G.shake-dt*3);
- if(state==='intro'){G.introT-=dt;if(G.introT<=0){state='play';msg(G.st.k==='fort'?'Get low to shoot the fuel tanks!':'Line up your height with the raiders!',2.4)}return}
- if(state==='clear'){G.clearT-=dt;G.ship.z+=G.speed*dt;if(G.clearT<=0){const nx=G.si+1;if(nx%NST===0){state='win';sfx('win')}else startStage(nx)}return}
+ if(state==='intro'){G.introT-=dt;if(G.introT<=0){state='play';msg(G.st.k==='walk'?'Swipe to run. Tap JUMP and LAZORD!':G.st.k==='fort'?'Get low to shoot the fuel tanks!':'Line up your height with the raiders!',2.4)}return}
+ if(state==='clear'){G.clearT-=dt;if(G.st.k!=='walk')G.ship.z+=G.speed*dt;if(G.clearT<=0){const nx=G.si+1;if(nx%NST===0){state='win';sfx('win')}else startStage(nx)}return}
  if(state!=='play')return;
+ if(G.st.k==='walk'){updateWalk(dt);return}
  const s=G.ship,fort=G.st.k==='fort';
  if(s.alive){
   let ix=INPUT.x,iy=INPUT.y,fire=INPUT.fire||AUTO;
@@ -152,7 +157,7 @@ function respawn(){const s=G.ship;if(G.lives<=0){state='over';save.hi=Math.max(s
  if(G.st.k==='fort'){if(!G.bossOn)s.z=Math.max(G.fz0-8,G.lastSafe)}
  else{for(const e of G.enemies)if(Math.abs(e.z-s.z)<6)e.z+=8}
  msg('Get ready!',1.2)}
-function stageClear(){const bonus=Math.round(G.fuel)*10+(G.st.k==='space'?1000:2000)*(1+G.loop);addScore(bonus);G.bonus=bonus;state='clear';G.clearT=2.6;G.clearT2=0;sfx('clear');musicFor(null)}
+function stageClear(){const wk=G.st.k==='walk';const bonus=(wk?0:Math.round(G.fuel)*10)+(G.st.k==='space'?1000:2000)*(1+G.loop);addScore(bonus);G.bonus=bonus;state='clear';G.clearT=G.st.fin?4.2:3.4;G.ringPiece=G.si%NST+1;G.clearT2=0;sfx('clear');musicFor(null)}
 // ---------- space dogfight ----------
 function updateSpace(dt){const s=G.ship;G.spawnT-=dt;
  const alive=G.enemies.filter(e=>e.alive&&e.z>s.z).length,left=G.need-G.kills;
@@ -368,7 +373,7 @@ function logo(x,y,w,maxH){const h1=Math.min(maxH*.3,w*.12),h2=Math.min(maxH*.42,
  ctx.lineWidth=f.sz*.32;ctx.strokeStyle='#0a1638';ctx.strokeText('REBEL MISSION',0,0);const g=ctx.createLinearGradient(0,-f.sz/2,0,f.sz/2);g.addColorStop(0,'#fff6b0');g.addColorStop(.5,'#ffc93a');g.addColorStop(1,'#ff7a2e');ctx.fillStyle=g;ctx.fillText('REBEL MISSION',0,0);ctx.restore();
  reg('txt:logo2',x-f.w/2,y+h1*1.25,f.w,f.sz*1.2);return h1*1.25+f.sz*1.3}
 // ---------- screens ----------
-function go(st){if(st==='how'&&state!=='how')prevState=state;state=st;BTNDOWN=null;if(st==='title')musicFor('title')}
+function go(st){if(st==='how'&&state!=='how')prevState=state;state=st;BTNDOWN=null;if(typeof resetInput==='function')resetInput();if(st==='title')musicFor('title')}
 function startGame(){audioInit();newGame()}
 function toggleMute(){muted=!muted;save.muted=muted;persist();if(MASTER)MASTER.gain.value=muted?0:.8;if(!muted){audioInit();sfx('click')}}
 function toggleAuto(){AUTO=!AUTO;save.auto=AUTO;persist();sfx('click')}
@@ -376,24 +381,26 @@ function titleBG(){if(!G||state==='title'){CAM.z=TIME*6}drawSky(TIME,6);}
 function drawTitle(){const s=S();CAM.u=Math.min(W,H)/12;CAM.fx=.894*CAM.u;CAM.fy=-.447*CAM.u;titleBG();const port=s.h>s.w*1.05;
  // a starfighter cruising across the background
  const fx=((TIME*.08)%1.4-.2);ctx.save();CAM.lx=.894*CAM.u;CAM.ly=.447*CAM.u;CAM.a=CAM.u*.82;CAM.z=0;CAM.ox=s.l+s.w*fx;CAM.oy=s.t+s.h*(port?.9:.92)-fx*s.h*.35;ctx.globalAlpha=.5;drawShip(4,0,0,Math.sin(TIME)*.3,TIME);ctx.restore();ctx.globalAlpha=1;
- const credit=(cx,w)=>txt('credit',"A Peter's Arcade original",cx,s.b-16,16,'#cfe0ff',null,w);
+ const credit=(cx,w)=>txt('credit',"A Peter's Arcade original",cx,s.b-16,17,'#cfe0ff',null,Math.max(w,250));
  const hi=save.hi?'Best: '+save.hi.toLocaleString('en-US'):'';
  if(port){const cx=s.l+s.w/2,lw=Math.min(s.w-30,420);const lh=logo(cx,s.t+56,lw,Math.min(120,s.h*.15));
   const bh=Math.min(58,s.h*.075),bw=Math.min(300,s.w-60);const yb=s.b-34-bh*2.1-(hi?26:0);
   const top=s.t+56+lh+10,avail=yb-top-14,cardH=Math.max(80,Math.min(s.w-40,avail));const tag=avail-cardH>=56;const ct=top+Math.max(0,(avail-cardH-(tag?40:0))/2);jimCard('portrait',cx-cardH/2,ct,cardH,cardH);
-  if(tag)txt('tag','Fly low, dodge walls, blast the robots!',cx,ct+cardH+28,Math.max(17,Math.min(20,s.w/20)),'#ffe14a',null,s.w-24);
+  if(tag)txt('tag','Find the pieces of the Light Ring!',cx,ct+cardH+28,Math.max(17,Math.min(20,s.w/20)),'#ffe14a',null,s.w-24);
   button('play',cx-bw/2,yb,bw,bh,'▶  PLAY','#1f9d55',startGame);const y2=yb+bh+12,h2=bh*.8;button('how',cx-bw/2,y2,bw-h2-10,h2,'How to Play','#3a5bd9',()=>{howPage=0;go('how')});button('snd',cx+bw/2-h2,y2,h2,h2,muted?'🔇':'🔊','#4a3f8a',toggleMute);
   if(hi)txt('hi',hi,cx,y2+h2+18,17,'#ffe14a');credit(cx,s.w-20)}
  else{const cw=Math.min(s.h-74,s.w*.42),cx0=s.l+14+cw/2,cy0=s.t+52+(s.h-52-cw)/2-6;jimCard('portrait',cx0-cw/2,cy0,cw,cw);
   const rx=s.l+28+cw,rw=s.r-rx-16,cx=rx+rw/2;const lw=Math.min(rw,460);const lh=logo(cx,s.t+Math.max(10,s.h*.05),lw,Math.min(150,s.h*.3));
   const bh=Math.min(58,s.h*.14),bw=Math.min(300,rw-20);let yb=s.t+Math.max(10,s.h*.05)+lh+Math.max(10,s.h*.05);
   button('play',cx-bw/2,yb,bw,bh,'▶  PLAY','#1f9d55',startGame);const y2=yb+bh+12,h2=bh*.82;button('how',cx-bw/2,y2,bw-h2-10,h2,'How to Play','#3a5bd9',()=>{howPage=0;go('how')});button('snd',cx+bw/2-h2,y2,h2,h2,muted?'🔇':'🔊','#4a3f8a',toggleMute);
-  if(hi)txt('hi',hi,cx,y2+h2+20,15,'#ffe14a');credit(cx,rw)}}
+  if(hi)txt('hi',hi,cx,y2+h2+20,17,'#ffe14a');credit(cx,rw)}}
 const HOW=[
- ['Fly the mission','Steer Jedi Jim\'s starfighter with the thumb stick on the left (or arrow keys / WASD).\nUp and down change your ALTITUDE. Left and right slide across.\nThe shadow and dashed line under your ship, and the altimeter on the left, show how high you are.'],
+ ['The quest','Jim is searching for the precious Light Ring!\nEvery stage you clear, flying or on foot, earns one glowing piece of the ring.\nCollect all 10 pieces. The last piece waits at the end of the Light Ring Vault.'],
+ ['Fly the mission','SWIPE on the screen to steer Jim\'s starfighter: left and right slide across, up and down change your ALTITUDE (height). Lift your finger to stop.\nTap FIRE on the right to shoot. AUTO fires for you.\nKeys: arrows / WASD, Space or J to fire.'],
  ['Walls and force fields','Fly over low brick walls, or through the gaps and windows.\nDodge the pink force fields by flying under or over them.\nA GREEN ring on the next wall means you will make it through. RED means move!\nGreen bands on the altimeter show the open heights.'],
  ['Fuel and targets','Fuel drains all the time. Shoot FUEL tanks to refill.\nYour lasers fly at your height, so get LOW to hit things on the ground.\nGun turrets shoot back. Radar dishes are worth 1,000. Missiles launch as you get close.'],
- ['Dogfights and robots','In open space, match a raider\'s height: a green box means it\'s lined up.\nAt the end of some fortresses a giant robot waits. Shoot its glowing core while it\'s open.\nFIRE shoots (Space or J). AUTO fires for you. ⏸ pauses. Extra ship every 20,000 points.']];
+ ['Dogfights and robots','In open space, match a raider\'s height: a green box means it\'s lined up.\nAt the end of some fortresses a giant robot waits. Shoot its glowing core while it\'s open.\n⏸ pauses. Extra ship every 20,000 points.'],
+ ['On foot','Some stages Jim leaves his fighter and runs!\nSWIPE left or right to run. Tap JUMP to leap gaps and ledges. Tap LAZORD to swing his glowing Lazord at scrap bots and drones. It even knocks drone shots away!\nGrab crystals for points. Reach the pedestal to win the ring piece.\nKeys: arrows / A D to run, Up / W / Space to jump, J / K to swing the Lazord.']];
 function drawHow(){const s=S();drawSky(TIME,2);const pw=Math.min(s.w-24,560),ph=Math.min(s.h-24,560),x=s.l+(s.w-pw)/2,y=s.t+(s.h-ph)/2;
  ctx.fillStyle='rgba(10,16,48,.92)';rr(x,y,pw,ph,18);ctx.fill();ctx.strokeStyle='#8fd0ff';ctx.lineWidth=3;ctx.stroke();
  const [t,b]=HOW[howPage];const ts=Math.min(28,ph*.08);txt('howT',t,x+pw/2,y+ts*1.1,ts,'#ffe14a',null,pw-30);
@@ -407,12 +414,15 @@ function hudLayout(){const s=S(),m=Math.min(W,H),hb=clamp(m*.13,44,62),pad=8;con
  o.inset=[s.l+pad,s.t+pad,hb,hb];o.pause=[s.r-pad-44,s.t+pad,44,44];o.mute=[s.r-pad-44-8-44,s.t+pad,44,44];
  const tx=s.l+pad+hb+10,tw=Math.max(60,o.mute[0]-8-tx);o.text=[tx,s.t+pad,tw,hb];
  o.fuel=[tx,s.t+pad+hb*.56,Math.min(tw,240),Math.max(21,hb*.4)];
- const R=clamp(m*.15,46,70);o.stick=[s.l+18+R,s.b-18-R,R];
- const Rf=clamp(m*.12,40,60);o.fire=[s.r-18-Rf,s.b-18-Rf,Rf];o.auto=[o.fire[0]-Rf,o.fire[1]-Rf-48,Rf*2,38];
- const gy0=s.t+pad+hb+14,gy1=o.stick[1]-R-34;o.alt=[s.l+pad+2,gy0,26,Math.max(60,Math.min(220,gy1-gy0))];
+ // Chef Kelly layout: big main button bottom-right, second button to its left and a little higher
+ const r1=clamp(m*.12,40,58);o.b1=[s.r-pad-r1-4,s.b-pad-r1-6,r1];const walk=!!(G&&G.st&&G.st.k==='walk');
+ const r2=walk?r1:Math.max(36,r1*.8);o.b2=[o.b1[0]-r1-r2*1.25,o.b1[1]-r1*.45,r2];o.ctrlTop=Math.min(o.b2[1]-r2,o.b1[1]-r1)-10;
+ o.fire=o.b1;
+ const gy0=s.t+pad+hb+14,gy1=s.b-150;o.alt=[s.l+pad+2,gy0,26,Math.max(60,Math.min(220,gy1-gy0))];
  o.top=s.t+pad+hb+6;o.bot=s.b-6;return o}
-let STICK=null,FIREP=null;const KEYS={};
+let FIREP=null,SWIPED=false;const KEYS={};
 function drawHUD(){const o=hudLayout(),s=G.ship;
+ {const hb=o.top+4,g=ctx.createLinearGradient(0,0,0,hb+18);g.addColorStop(0,'rgba(5,6,26,.92)');g.addColorStop(hb/(hb+18),'rgba(5,6,26,.82)');g.addColorStop(1,'rgba(5,6,26,0)');ctx.fillStyle=g;ctx.fillRect(0,0,W,hb+18)}
  // cockpit inset with Jim
  const [ix,iy,ih]=o.inset;ctx.fillStyle='#0a1638';rr(ix,iy,ih,ih,ih*.22);ctx.fill();drawJim(ix+ih/2,iy+ih/2,ih/2-3,'head');ctx.strokeStyle=G.hitFlash>0?'#ff5050':'#8fd0ff';ctx.lineWidth=3;rr(ix,iy,ih,ih,ih*.22);ctx.stroke();reg('inset',ix,iy,ih,ih);
  const [tx,ty,tw,th]=o.text;const sz=Math.min(th*.36,22);
@@ -420,30 +430,31 @@ function drawHUD(){const o=hudLayout(),s=G.ship;
  // lives as little ships
  const lw=Math.min(14,sz*.7),lx=tx+f.w+12,maxL=Math.min(G.lives,Math.floor((tx+tw-lx)/(lw*1.5)));
  for(let i=0;i<maxL;i++){const cx=lx+i*lw*1.5+lw*.6,cy=ty+sz*.6;poly([[cx,cy-lw*.6],[cx+lw*.6,cy+lw*.5],[cx,cy+lw*.25],[cx-lw*.6,cy+lw*.5]],'#e8e4da','#7fd4ff',1)}if(maxL>0)reg('lives',lx,ty+sz*.6-lw*.6,maxL*lw*1.5,lw*1.2);
- // fuel
- const [fx,fy,fw,fh]=o.fuel;const lowF=G.fuel<25&&Math.floor(TIME*4)%2;ctx.fillStyle='rgba(0,0,0,.55)';rr(fx,fy,fw,fh,fh/2);ctx.fill();
+ const walk=G.st.k==='walk';
+ const [fx,fy,fw,fh]=o.fuel;
+ if(walk){ctx.fillStyle='rgba(0,0,0,.55)';rr(fx,fy,fw,fh,fh/2);ctx.fill();const rn=state==='clear'?(G.ringPiece||0):G.si%NST;drawLightRing(fx+fh/2+2,fy+fh/2,fh*.36,rn,TIME,false);txt('ringL','Light Ring '+rn+' / '+RINGN,fx+fh+8,fy+fh/2+1,16,'#fff6c8','left',fw-fh-12)}else{
+const lowF=G.fuel<25&&Math.floor(TIME*4)%2;ctx.fillStyle='rgba(0,0,0,.55)';rr(fx,fy,fw,fh,fh/2);ctx.fill();
  const fl=clamp(G.fuel/100,0,1);ctx.fillStyle=G.fuel<25?(lowF?'#ff3030':'#a01818'):G.fuel<50?'#ffc93a':'#3ddc6a';if(fl>0){rr(fx+2,fy+2,(fw-4)*fl,fh-4,(fh-4)/2);ctx.fill()}ctx.strokeStyle='#fff';ctx.lineWidth=1.5;rr(fx,fy,fw,fh,fh/2);ctx.stroke();
- ctx.fillStyle='#fff';ctx.font=font(16);ctx.textAlign='left';ctx.textBaseline='middle';ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,20,.8)';ctx.strokeText('FUEL',fx+8,fy+fh/2+1);ctx.fillText('FUEL',fx+8,fy+fh/2+1);ctx.textBaseline='alphabetic';reg('fuel',fx,fy,fw,fh);
+ ctx.fillStyle='#fff';ctx.font=font(16);ctx.textAlign='left';ctx.textBaseline='middle';ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,20,.8)';ctx.strokeText('FUEL',fx+8,fy+fh/2+1);ctx.fillText('FUEL',fx+8,fy+fh/2+1);ctx.textBaseline='alphabetic';reg('fuel',fx,fy,fw,fh);}
  // altimeter with open-height bands for the next wall
- const [ax,ay,aw,ah]=o.alt;ctx.fillStyle='rgba(0,0,20,.6)';rr(ax,ay,aw,ah,6);ctx.fill();
+ if(!walk){const [ax,ay,aw,ah]=o.alt;ctx.fillStyle='rgba(0,0,20,.6)';rr(ax,ay,aw,ah,6);ctx.fill();
  const yOf=a=>ay+ah-4-(a/ALTMAX)*(ah-8);
  if(G.st.k==='fort'){const w=G.walls.find(w=>!w.passed&&w.z>s.z-.3&&w.z-s.z<14);if(w){for(const [a0,a1] of freeAlts(w,s.x)){ctx.fillStyle='rgba(77,255,122,.45)';ctx.fillRect(ax+3,yOf(a1),aw-6,yOf(a0)-yOf(a1))}}}
  ctx.strokeStyle='rgba(255,255,255,.5)';ctx.lineWidth=1;for(let k=0;k<=ALTMAX;k++){const y=yOf(k);ctx.beginPath();ctx.moveTo(ax+2,y);ctx.lineTo(ax+8,y);ctx.stroke()}
  const my=yOf(s.alt);poly([[ax+aw+7,my],[ax+aw-4,my-7],[ax+aw-4,my+7]],'#7fd4ff','#fff',1.5);ctx.fillStyle='#7fd4ff';ctx.fillRect(ax+3,my-1.5,aw-6,3);
- ctx.strokeStyle='#bfe6ff';ctx.lineWidth=1.5;rr(ax,ay,aw,ah,6);ctx.stroke();txt('altL','ALT',ax+aw/2,ay+ah+13,16,'#bfe6ff');reg('alt',ax,ay,aw+8,ah);
+ ctx.strokeStyle='#bfe6ff';ctx.lineWidth=1.5;rr(ax,ay,aw,ah,6);ctx.stroke();txt('altL','ALT',ax+aw/2+2,ay+ah+14,18,'#bfe6ff');reg('alt',ax,ay,aw+8,ah);}
  // pause + mute
  iconBtn('pause',o.pause,'⏸',()=>go('pause'));iconBtn('mute',o.mute,muted?'🔇':'🔊',toggleMute);
  // boss bar
  if(G.boss&&G.bossOn&&G.boss.alive){const bw=Math.min(260,o.s.w*.5),bx=o.s.l+(o.s.w-bw)/2,by=o.top+4;ctx.fillStyle='rgba(0,0,0,.6)';rr(bx,by,bw,12,6);ctx.fill();ctx.fillStyle='#ff5ad8';rr(bx+2,by+2,(bw-4)*G.boss.hp/G.boss.max,8,4);ctx.fill();txt(null,G.boss.kind===1?'WARDEN':'OVERLORD',bx+bw/2,by+27,16,'#ffd0f4')}
  // space kill counter
- if(G.st.k==='space'){txt(null,'Raiders '+Math.min(G.kills,G.need)+' / '+G.need,o.s.l+o.s.w/2,o.top+12,14,'#ffd0a0')}
- // controls
- const [sx,sy,R]=o.stick,st=STICK;const bx=st?st.ox:sx,by=st?st.oy:sy;ctx.globalAlpha=st?.75:.45;circ(bx,by,R,'rgba(30,60,140,.45)');ctx.strokeStyle='#8fd0ff';ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(bx,by,R,0,6.283);ctx.stroke();
- const kx=bx+INPUT.x*R*.6,ky=by-INPUT.y*R*.6;circ(kx,ky,R*.42,'rgba(143,208,255,.85)');ctx.globalAlpha=1;
- ctx.fillStyle='rgba(255,255,255,.6)';ctx.font=font(R*.26);ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('▲',bx,by-R*.74);ctx.fillText('▼',bx,by+R*.76);ctx.textBaseline='alphabetic';reg('stick',sx-R,sy-R,R*2,R*2);
- const [fx2,fy2,Rf]=o.fire,fdown=!!FIREP||KEYS.fire;circ(fx2,fy2+3,Rf,'rgba(0,0,0,.35)');circ(fx2,fy2+(fdown?3:0),Rf,fdown?'#2a7bd9':'rgba(42,110,217,.8)');ctx.strokeStyle='#cfe8ff';ctx.lineWidth=3;ctx.beginPath();ctx.arc(fx2,fy2+(fdown?3:0),Rf,0,6.283);ctx.stroke();
- txt(null,'FIRE',fx2,fy2+(fdown?3:0),Rf*.42,'#fff');reg('btn:fire',fx2-Rf,fy2-Rf,Rf*2,Rf*2+3);
- const [ax2,ay2,aw2,ah2]=o.auto;ctx.fillStyle=AUTO?'#1f9d55':'rgba(40,40,70,.85)';rr(ax2,ay2,aw2,ah2,ah2/2);ctx.fill();ctx.strokeStyle='#cfe8ff';ctx.lineWidth=2;ctx.stroke();txt(null,AUTO?'AUTO ✓':'AUTO',ax2+aw2/2,ay2+ah2/2+1,Math.max(16,Math.min(18,ah2*.45)),'#fff',null,aw2-8);reg('btn:auto',ax2,ay2,aw2,ah2);BTN.push({id:'auto',x:ax2,y:ay2,w:aw2,h:ah2,cb:toggleAuto});
+ if(G.st.k==='space'){txt(null,'Raiders '+Math.min(G.kills,G.need)+' / '+G.need,o.s.l+o.s.w/2,o.top+12,17,'#ffd0a0')}
+ // swipe feedback (anchor ring + direction) and first-time hint
+ if(JOY.active){ctx.globalAlpha=.55;ctx.strokeStyle='#8fd0ff';ctx.lineWidth=3;ctx.beginPath();ctx.arc(JOY.sx,JOY.sy,26,0,6.283);ctx.stroke();if(Math.hypot(JOY.dx,JOY.dy)>.2){const ex=JOY.sx+JOY.dx*44,ey=JOY.sy+JOY.dy*44;ctx.beginPath();ctx.moveTo(JOY.sx,JOY.sy);ctx.lineTo(ex,ey);ctx.stroke();circ(ex,ey,9,'#8fd0ff')}ctx.globalAlpha=1}
+ else if(!SWIPED||G.t<4){const hx=o.s.l+Math.min(o.s.w*.28,150),hy=o.b1[1]-10;ctx.globalAlpha=.85;[walk?'👆 Swipe ◀ ▶':'👆 Swipe to steer',walk?'to run':'▲ up / ▼ down = height'].forEach((l,i)=>txt(null,l,hx,hy+i*22,17,'#fff',null,o.s.w*.5,{oc:'rgba(0,0,0,.75)'}));ctx.globalAlpha=1}
+ const rb=(c,id,label,col,down)=>{const [x,y,r]=c;circ(x,y+3,r,'rgba(0,0,0,.35)');circ(x,y+(down?3:0),r,col);ctx.strokeStyle='#cfe8ff';ctx.lineWidth=3;ctx.beginPath();ctx.arc(x,y+(down?3:0),r,0,6.283);ctx.stroke();txt(null,label,x,y+(down?3:0),Math.max(17,Math.min(22,r*.4)),'#fff',null,Math.max(r*1.9,92));reg('btn:'+id,x-r,y-r,r*2,r*2+3)};
+ if(walk){rb(o.b1,'jump','JUMP',BTNP.jump?'#2fb56a':'rgba(31,157,85,.85)',BTNP.jump);rb(o.b2,'lazord','LAZORD',BTNP.lazord?'#18a9c9':'rgba(20,140,190,.85)',BTNP.lazord)}
+ else{const fdown=!!FIREP||KEYS.fire;rb(o.b1,'fire','FIRE',fdown?'#2a7bd9':'rgba(42,110,217,.85)',fdown);rb(o.b2,'auto','',AUTO?'#1f9d55':'rgba(40,40,70,.85)',false);txt(null,'AUTO',o.b2[0],o.b2[1]-9,17,'#fff');txt(null,AUTO?'ON':'OFF',o.b2[0],o.b2[1]+11,16,AUTO?'#d8ffd8':'#c8c8e0')}
  // messages
  for(const m of G.msgs){ctx.globalAlpha=clamp(m.life*2,0,1);const my=o.top+(G.bossOn?60:G.st.k==='space'?44:18),mw=o.s.w*.9,msz=Math.max(17,Math.min(20,o.s.w/22));ctx.font=font(msz);
   if(ctx.measureText(m.t).width<=mw)txt(null,m.t,o.s.l+o.s.w/2,my,msz,'#fff',null,mw,{oc:'#05061a'});
@@ -452,57 +463,82 @@ function drawHUD(){const o=hudLayout(),s=G.ship;
   ctx.globalAlpha=1}}
 function iconBtn(id,r,label,cb){const [x,y,w,h]=r;const pr=BTNDOWN===id;ctx.fillStyle='rgba(10,20,60,.75)';rr(x,y+(pr?2:0),w,h,10);ctx.fill();ctx.strokeStyle='#8fd0ff';ctx.lineWidth=2;ctx.stroke();ctx.font=font(h*.48);ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#fff';ctx.fillText(label,x+w/2,y+h/2+1+(pr?2:0));ctx.textBaseline='alphabetic';reg('btn:'+id,x,y,w,h);BTN.push({id,x,y,w,h,cb})}
 function panel(w,h){const s=S();w=Math.min(w,s.w-24);h=Math.min(h,s.h-24);const x=s.l+(s.w-w)/2,y=s.t+(s.h-h)/2;ctx.fillStyle='rgba(8,12,40,.9)';rr(x,y,w,h,18);ctx.fill();ctx.strokeStyle='#8fd0ff';ctx.lineWidth=3;ctx.stroke();return{x,y,w,h}}
-function drawPlay(){const o=hudLayout();setCam(o.top,o.bot);drawWorld();drawHUD();
- if(state==='intro'){const s=o.s,st=G.st;const pw=Math.min(s.w-30,440),ph=Math.min(176,s.h*.42),px=s.l+(s.w-pw)/2,py=s.t+s.h*.36-ph/2;ctx.fillStyle='rgba(8,12,40,.82)';rr(px,py,pw,ph,16);ctx.fill();ctx.strokeStyle='#8fd0ff';ctx.lineWidth=2;ctx.stroke();
+function drawPlay(){const o=hudLayout();if(G.st.k==='walk')drawWalk(o);else{setCam(o.top,o.bot);drawWorld()}drawHUD();
+
+ if(state==='intro'){const s=o.s,st=G.st;const lx=G.st.k==='walk'?s.l+15:Math.max(s.l+15,o.alt[0]+o.alt[2]+16),aw=s.r-15-lx;const pw=Math.min(aw,440),ph=Math.min(176,s.h*.42),px=lx+(aw-pw)/2;let py=s.t+s.h*.36-ph/2;
+  if(G.story){const one=s.h<500,sz=one?Math.max(20,Math.min(26,aw/22)):Math.max(22,Math.min(32,aw/12)),need=one?sz*1.5+12:sz*2.7+14;py=Math.max(py,o.top+need);
+   if(one)txt('story1','Jim is searching for the precious Light Ring!',lx+aw/2,py-12-sz*.6,sz,'#fff6c8',null,aw,{oc:'#1a3a6a'});
+   else{txt('story1','Jim is searching for the',lx+aw/2,py-14-sz*1.95,sz,'#fff',null,aw);txt('story2','precious Light Ring!',lx+aw/2,py-14-sz*.6,sz*1.1,'#fff6c8',null,aw,{oc:'#1a3a6a'})}}ctx.fillStyle='rgba(8,12,40,.82)';rr(px,py,pw,ph,16);ctx.fill();ctx.strokeStyle='#8fd0ff';ctx.lineWidth=2;ctx.stroke();
   const r=ph*.3;drawJim(px+14+r,py+ph/2,r,'head');ctx.strokeStyle='#8fd0ff';ctx.beginPath();ctx.arc(px+14+r,py+ph/2,r,0,6.283);ctx.stroke();
   const tx=px+28+r*2,tw=pw-(tx-px)-12;txt('stg','STAGE '+(G.si+1)+(G.loop?'  ·  LOOP '+(G.loop+1):''),tx,py+ph*.17,Math.max(16,Math.min(18,ph*.11)),'#9fc4ff','left',tw);
   txt('stn',st.n.toUpperCase(),tx,py+ph*.36,Math.min(26,ph*.17),'#ffe14a','left',tw);const ls=wrap('"'+st.sub+'"',tw,17,false);ls.slice(0,3).forEach((l,i)=>txt('sts'+i,l,tx,py+ph*.56+i*21,17,'#fff','left',tw,{bold:false}))}
- if(state==='clear'){const s=o.s;txt('clr','STAGE CLEAR!',s.l+s.w/2,s.t+s.h*.36,Math.min(40,s.w/10),'#ffe14a',null,s.w-20);txt('bon','Bonus +'+(G.bonus||0).toLocaleString('en-US'),s.l+s.w/2,s.t+s.h*.36+Math.min(40,s.w/10),Math.min(22,s.w/18),'#fff')}}
+ if(state==='clear'){const s=o.s,cx=s.l+s.w/2,fin=G.st.fin,big=Math.min(40,s.w/10);let y=s.t+s.h*.3;
+  ctx.fillStyle='rgba(8,12,40,.72)';rr(s.l+12,y-big-6,s.w-24,big*2.2+Math.min(130,s.h*.22)+60,18);ctx.fill();
+  txt('clr',fin?'LIGHT RING FOUND!':'STAGE CLEAR!',cx,y,big,'#ffe14a',null,s.w-40);y+=big*.95;
+  const n=G.ringPiece||0,rr2=Math.min(52,s.h*.09);drawLightRing(cx,y+rr2+6,rr2,n,TIME,fin);y+=rr2*2+24;
+  txt('ringp','Light Ring pieces '+n+' / '+RINGN,cx,y,Math.max(18,Math.min(24,s.w/17)),'#fff6c8',null,s.w-40);y+=28;
+  txt('bon','Bonus +'+(G.bonus||0).toLocaleString('en-US'),cx,y,Math.max(17,Math.min(22,s.w/18)),'#fff',null,s.w-40)}}
 function drawPause(){drawPlay();BTN=[];UIE=[];ctx.fillStyle='rgba(0,0,10,.5)';ctx.fillRect(0,0,W,H);const p=panel(320,330);const pad=18,bw=p.w-pad*2;let bh=Math.min(50,(p.h-80)/4-10);
  txt('pt','PAUSED',p.x+p.w/2,p.y+30,26,'#ffe14a');let y=p.y+58;
  button('res',p.x+pad,y,bw,bh,'▶ Resume','#1f9d55',()=>go('play'));y+=bh+10;button('phow',p.x+pad,y,bw,bh,'How to Play','#3a5bd9',()=>{howPage=0;go('how')});y+=bh+10;
  button('psnd',p.x+pad,y,bw,bh,muted?'🔇 Sound off':'🔊 Sound on','#4a3f8a',toggleMute);y+=bh+10;button('quit',p.x+pad,y,bw,bh,'Quit to Title','#8a3f4a',()=>{G=null;go('title')})}
 function drawEnd(win){drawSky(TIME,win?3:1);const s=S(),port=s.h>s.w*1.05;const sc=G.score.toLocaleString('en-US');
  const bh=Math.min(54,s.h*.11),bw=Math.min(280,(port?s.w-60:s.w*.4));
- if(port){const cx=s.l+s.w/2;txt('et',win?'MISSION COMPLETE!':'GAME OVER',cx,s.t+40,Math.min(38,s.w/9),win?'#ffe14a':'#ff7a7a',null,s.w-20);
-  const yb=s.b-24-bh*2-12;const lines=win?['Jedi Jim beat all 7 stages!','The fortresses rebuild, tougher...','Score '+sc]:['Jim will fly again!','Score '+sc,'Best '+(save.hi||0).toLocaleString('en-US')];
+ if(port){const cx=s.l+s.w/2;txt('et',win?'MISSION COMPLETE!':'GAME OVER',cx,s.t+(win?40:84),Math.min(38,s.w/9),win?'#ffe14a':'#ff7a7a',null,s.w-20);
+  const yb=s.b-24-bh*2-12;const lines=win?['Jim found the Light Ring!','All '+RINGN+' pieces shine as one!','Score '+sc]:['Jim will fly again!','Score '+sc,'Best '+(save.hi||0).toLocaleString('en-US')];
   const ty=yb-lines.length*26-10;lines.forEach((l,i)=>txt('el'+i,l,cx,ty+i*26,19,i===lines.length-1&&!win?'#ffe14a':'#fff',null,s.w-30));
-  const top=s.t+70,ch=Math.max(80,ty-top-24);jimCard('portrait',cx-ch/2,top,ch,ch,!win);
+  const top=s.t+(win?70:114),ch=Math.max(80,Math.min(s.w-30,ty-top-24));jimCard('portrait',cx-ch/2,top,ch,ch,!win);if(win){const gp=ty-26-(top+ch);if(gp>70)drawLightRing(cx,top+ch+gp/2+4,Math.min(56,gp*.3),RINGN,TIME,true);else drawLightRing(cx+ch*.32,top+ch*.74,ch*.17,RINGN,TIME,true)}
   button('again',cx-bw/2,yb,bw,bh,win?'Next Mission ▶':'▶ Play Again','#1f9d55',win?()=>startStage(G.si+1):startGame);button('tt',cx-bw/2,yb+bh+12,bw,bh,'Title','#4a3f8a',()=>{G=null;go('title')})}
- else{const cw=Math.min(s.h-40,s.w*.4);jimCard('portrait',s.l+16,s.t+(s.h-cw)/2,cw,cw,!win);const rx=s.l+32+cw,rw=s.r-rx-16,cx=rx+rw/2;
-  let y=s.t+Math.max(24,s.h*.1);txt('et',win?'MISSION COMPLETE!':'GAME OVER',cx,y,Math.min(40,rw/9),win?'#ffe14a':'#ff7a7a',null,rw);y+=Math.min(40,rw/9)*.9+12;
-  const lines=win?['Jedi Jim beat all 7 stages!','The fortresses rebuild, tougher...','Score '+sc]:['Jim will fly again!','Score '+sc,'Best '+(save.hi||0).toLocaleString('en-US')];
+ else{const cw=Math.min(s.h-40,s.w*.4);jimCard('portrait',s.l+16,s.t+(s.h-cw)/2,cw,cw,!win);if(win)drawLightRing(s.l+16+cw*.82,s.t+(s.h-cw)/2+cw*.74,cw*.17,RINGN,TIME,true);const rx=s.l+32+cw,rw=s.r-rx-16,cx=rx+rw/2;
+  let y=s.t+Math.max(win?24:70,s.h*.1);txt('et',win?'MISSION COMPLETE!':'GAME OVER',cx,y,Math.min(40,rw/9),win?'#ffe14a':'#ff7a7a',null,rw);y+=Math.min(40,rw/9)*.9+12;
+  const lines=win?['Jim found the Light Ring!','All '+RINGN+' pieces shine as one!','Score '+sc]:['Jim will fly again!','Score '+sc,'Best '+(save.hi||0).toLocaleString('en-US')];
   const ls=Math.min(20,s.h*.05);lines.forEach((l,i)=>{txt('el'+i,l,cx,y+ls*.6,ls,i===2&&!win?'#ffe14a':'#fff',null,rw);y+=ls*1.35});y+=10;
   const bh2=Math.min(bh,(s.b-12-y-12)/2);button('again',cx-bw/2,y,bw,bh2,win?'Next Mission ▶':'▶ Play Again','#1f9d55',win?()=>startStage(G.si+1):startGame);button('tt',cx-bw/2,y+bh2+12,bw,bh2,'Title','#4a3f8a',()=>{G=null;go('title')})}}
 function render(){ctx.setTransform(DPR,0,0,DPR,0,0);BTN=[];UIE=[];
  if(state==='title')drawTitle();else if(state==='how')drawHow();else if(state==='pause')drawPause();else if(state==='over')drawEnd(false);else if(state==='win')drawEnd(true);else if(G)drawPlay();else drawTitle()}
 // ---------- input ----------
 function hitBtn(x,y){for(let i=BTN.length-1;i>=0;i--){const b=BTN[i];if(x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h)return b}return null}
-const PTR={};
-cv.addEventListener('pointerdown',e=>{e.preventDefault();audioInit();const x=e.clientX,y=e.clientY;try{cv.setPointerCapture(e.pointerId)}catch(_){}
- if(state==='intro'&&G&&G.introT<2.2){G.introT=0}
- if(state==='play'||state==='intro'){const o=hudLayout();const [fx,fy,Rf]=o.fire;const b=hitBtn(x,y);
-  if(b&&b.id!=='fire'){PTR[e.pointerId]={k:'btn',b};BTNDOWN=b.id;return}
-  if(Math.hypot(x-fx,y-fy)<Rf*1.3){PTR[e.pointerId]={k:'fire'};FIREP=e.pointerId;INPUT.fire=true;return}
-  if(x<W*.62||!STICK){const [sx,sy,R]=o.stick;const near=Math.hypot(x-sx,y-sy)<R*1.2;STICK={id:e.pointerId,ox:near?sx:x,oy:near?sy:y,R};PTR[e.pointerId]={k:'stick'};stickMove(x,y);return}
+// Touch: Chef Kelly's swipe-to-move (same thresholds + re-anchoring), buttons on the right.
+const PTR={},BTNP={jump:false,lazord:false};const SW_DEAD=8,SW_STEP=22,SW_FULL=30;
+const JOY={active:false,id:null,bx:0,by:0,sx:0,sy:0,dx:0,dy:0,seg:false};
+function inCircle(c,x,y,pad){return Math.hypot(x-c[0],y-c[1])<=c[2]+(pad||0)}
+cv.addEventListener('pointerdown',e=>{e.preventDefault();audioInit();const x=e.clientX,y=e.clientY;
+ if(state==='intro'&&G&&G.introT<(G.story?3.6:2.2)){G.introT=0}
+ if((state==='play'||state==='intro')&&G){const o=hudLayout(),walk=G.st.k==='walk';
+  for(const b of BTN)if((b.id==='pause'||b.id==='mute')&&x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h){PTR[e.pointerId]={k:'btn',b};BTNDOWN=b.id;return}
+  if(inCircle(o.b1,x,y,14)){if(walk){INPUT.jumpE=true;BTNP.jump=true;PTR[e.pointerId]={k:'jump'}}else{FIREP=e.pointerId;INPUT.fire=true;PTR[e.pointerId]={k:'fire'}}return}
+  if(inCircle(o.b2,x,y,10)){if(walk){INPUT.strikeE=true;BTNP.lazord=true;PTR[e.pointerId]={k:'lazord'}}else{toggleAuto();PTR[e.pointerId]={k:'auto'}}return}
+  // swipe-to-move: a finger down anywhere else steers (flying: left/right + height; on foot: run left/right)
+  if(!JOY.active){Object.assign(JOY,{active:true,id:e.pointerId,bx:x,by:y,sx:x,sy:y,dx:0,dy:0,seg:false});PTR[e.pointerId]={k:'joy'}}
   return}
- const b=hitBtn(x,y);if(b){PTR[e.pointerId]={k:'btn',b};BTNDOWN=b.id}});
-function stickMove(x,y){if(!STICK)return;let dx=(x-STICK.ox)/(STICK.R*.8),dy=(y-STICK.oy)/(STICK.R*.8);const l=Math.hypot(dx,dy);if(l>1){dx/=l;dy/=l}
- INPUT.x=Math.abs(dx)<.12?0:dx;INPUT.y=Math.abs(dy)<.12?0:-dy}
-cv.addEventListener('pointermove',e=>{const p=PTR[e.pointerId];if(p&&p.k==='stick')stickMove(e.clientX,e.clientY)});
+ const b=hitBtn(x,y);if(b){PTR[e.pointerId]={k:'btn',b};BTNDOWN=b.id}},{passive:false});
+function joyMove(x,y){// same as Chef Kelly: once the finger travels SW_STEP px from its anchor, set the direction (atan2) and re-anchor
+ const dx=x-JOY.bx,dy=y-JOY.by,d=Math.hypot(dx,dy);
+ if(d>=SW_STEP){const a=Math.atan2(dy,dx);JOY.dx=Math.cos(a);JOY.dy=Math.sin(a);JOY.bx=x-JOY.dx*SW_FULL*.5;JOY.by=y-JOY.dy*SW_FULL*.5;JOY.seg=true;SWIPED=true}
+ else if(!JOY.seg&&d>SW_DEAD){const m=Math.min(1,(d-SW_DEAD)/(SW_STEP-SW_DEAD))*.85+.15;JOY.dx=dx/d*m;JOY.dy=dy/d*m}
+ else if(JOY.seg&&d>SW_DEAD){const a=Math.atan2(dy,dx),b=Math.atan2(JOY.dy,JOY.dx);let da=a-b;while(da>Math.PI)da-=6.283;while(da<-Math.PI)da+=6.283;if(Math.abs(da)<2.2){const c=b+da*.5;JOY.dx=Math.cos(c);JOY.dy=Math.sin(c)}}}
+cv.addEventListener('pointermove',e=>{if(JOY.active&&e.pointerId===JOY.id){e.preventDefault();joyMove(e.clientX,e.clientY)}},{passive:false});
 function ptrUp(e){const p=PTR[e.pointerId];delete PTR[e.pointerId];if(!p)return;
- if(p.k==='stick'){STICK=null;INPUT.x=INPUT.y=0}else if(p.k==='fire'){FIREP=null;INPUT.fire=false}
+ if(p.k==='joy'){JOY.active=false;JOY.dx=JOY.dy=0}else if(p.k==='fire'){FIREP=null;INPUT.fire=false}else if(p.k==='jump')BTNP.jump=false;else if(p.k==='lazord')BTNP.lazord=false;
  else if(p.k==='btn'){BTNDOWN=null;const x=e.clientX,y=e.clientY,b=p.b;if(e.type==='pointerup'&&x>=b.x-6&&x<=b.x+b.w+6&&y>=b.y-6&&y<=b.y+b.h+6){sfx('click');b.cb()}}}
 cv.addEventListener('pointerup',ptrUp);cv.addEventListener('pointercancel',ptrUp);
-const KM={ArrowLeft:'l',KeyA:'l',ArrowRight:'r',KeyD:'r',ArrowUp:'u',KeyW:'u',ArrowDown:'d',KeyS:'d',Space:'fire',KeyJ:'fire',KeyK:'fire',KeyZ:'fire'};
+['touchstart','touchmove','touchend','gesturestart','contextmenu'].forEach(ev=>cv.addEventListener(ev,e=>{if(e.cancelable)e.preventDefault()},{passive:false}));
+// safe reset: a touch the browser cancels (or the app losing focus) can never leave Jim steering, firing or running
+function resetInput(){for(const k in KEYS)KEYS[k]=false;for(const k in PTR)delete PTR[k];JOY.active=false;JOY.dx=JOY.dy=0;FIREP=null;INPUT.x=INPUT.y=0;INPUT.fire=false;INPUT.jumpE=INPUT.strikeE=false;BTNP.jump=BTNP.lazord=false;BTNDOWN=null}
+['pointercancel','lostpointercapture'].forEach(ev=>cv.addEventListener(ev,e=>{if((JOY.active&&e.pointerId===JOY.id)||PTR[e.pointerId])resetInput()}));
+cv.addEventListener('touchcancel',resetInput);addEventListener('blur',resetInput);document.addEventListener('visibilitychange',()=>{if(document.hidden)resetInput()});
+const KM={ArrowLeft:'l',KeyA:'l',ArrowRight:'r',KeyD:'r',ArrowUp:'u',KeyW:'u',ArrowDown:'d',KeyS:'d',Space:'fire',KeyJ:'fire',KeyK:'fire',KeyZ:'fire',KeyX:'fire'};
 addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'))return;const k=KM[e.code];audioInit();
  if(k){KEYS[k]=true;e.preventDefault()}
+ if(G&&G.st&&G.st.k==='walk'&&state==='play'&&!e.repeat){if(e.code==='Space'||e.code==='ArrowUp'||e.code==='KeyW')INPUT.jumpE=true;if(e.code==='KeyJ'||e.code==='KeyK'||e.code==='KeyZ'||e.code==='KeyX')INPUT.strikeE=true}
  if(e.code==='KeyF'&&(state==='play'||state==='intro'))toggleAuto();
  if(e.code==='KeyM')toggleMute();
  if((e.code==='KeyP'||e.code==='Escape')){if(state==='play'||state==='intro')go('pause');else if(state==='pause')go('play')}
  if(e.code==='Enter'||(e.code==='Space'&&state!=='play')){if(state==='title')startGame();else if(state==='over')startGame();else if(state==='win')startStage(G.si+1);else if(state==='intro')G.introT=0;else if(state==='pause')go('play')}});
 addEventListener('keyup',e=>{const k=KM[e.code];if(k)KEYS[k]=false});
-function keyInput(){if(STICK)return;INPUT.x=(KEYS.r?1:0)-(KEYS.l?1:0);INPUT.y=(KEYS.u?1:0)-(KEYS.d?1:0);INPUT.fire=!!(KEYS.fire||FIREP)}
+function keyInput(){let x=JOY.dx,y=-JOY.dy;if(Math.hypot(x,y)<.12){x=0;y=0}
+ const kx=(KEYS.r?1:0)-(KEYS.l?1:0),ky=(KEYS.u?1:0)-(KEYS.d?1:0);if(kx||ky){x=kx;y=ky}
+ INPUT.x=x;INPUT.y=y;INPUT.fire=!!(KEYS.fire||FIREP)}
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&(state==='play'||state==='intro'))go('pause');if(AC){if(document.hidden)AC.suspend();else AC.resume()}});
 // ---------- audio (soft retro synth; mute is remembered) ----------
 let AC=null,MASTER=null,MUS=null,SFXG=null,musT=0,musStep=0,SONG=null,NOISE=null;window.__ACS=window.__ACS||[];
@@ -518,6 +554,7 @@ const SONGS={
  title:{bpm:92,root:45,bass:[0,0,7,7,5,5,3,3],arp:[12,15,19,15,12,19,22,19, 10,14,17,14,10,17,22,17, 8,12,15,12,8,15,20,15, 7,10,14,10,7,14,19,14]},
  fort:{bpm:118,root:43,bass:[0,0,0,3,5,5,7,5],arp:[12,null,15,12,19,null,15,12, 12,null,15,17,19,null,22,19, 8,null,12,15,17,null,15,12, 10,null,14,17,19,null,17,14]},
  space:{bpm:108,root:47,bass:[0,7,5,3,0,7,10,7],arp:[19,17,15,12,15,17,19,22, 19,17,15,12,10,12,15,null, 17,15,12,10,12,15,17,19, 22,19,17,15,17,15,12,null]},
+ walk:{bpm:112,root:45,bass:[0,0,5,5,7,7,3,5],arp:[12,null,16,19,12,null,17,21, 12,null,16,19,14,null,19,17]},
  boss:{bpm:128,root:40,bass:[0,0,1,0,0,0,6,5],arp:[12,13,12,null,18,17,12,null, 12,13,15,null,18,19,18,null]}};
 function musicFor(k){SONG=k?SONGS[k]:null;musStep=0}
 function sched(){if(!AC||!SONG||muted)return;const sp=60/SONG.bpm/2;if(musT<AC.currentTime)musT=AC.currentTime+.05;
@@ -538,6 +575,9 @@ function sfx(n){if(!AC||muted||__T.silent)return;const t=AC.currentTime;switch(n
  case'win':[0,4,7,12,7,12,16,19].forEach((k,i)=>tone(NF(64+k),t+i*.12,.3,'triangle',.25));break;
  case'over':[7,5,3,0].forEach((k,i)=>tone(NF(60+k),t+i*.2,.35,'triangle',.25));break;
  case'life':[12,16,19,24].forEach((k,i)=>tone(NF(72+k),t+i*.06,.15,'square',.12));break;
+ case'jump':tone(320,t,.16,'triangle',.18,null,720);break;
+ case'swing':noise(t,.14,.18,3800);tone(520,t,.16,'sawtooth',.06,null,1500);break;
+ case'crystal':tone(NF(88),t,.08,'triangle',.16);tone(NF(95),t+.05,.1,'triangle',.14);break;
  case'click':tone(900,t,.04,'triangle',.12);break}}
 // ---------- autoplay bot (used by tests; window.__BOT=1) ----------
 function botInput(){const s=G.ship;let tx=s.x,ta=2.2;
@@ -562,22 +602,185 @@ const __T=window.__T={silent:false,step(n){for(let i=0;i<n;i++){TIME+=1/60;keyIn
  layout(){render();const s=S();return{els:UIE.slice(),SAFE:{l:s.l,t:s.t,r:s.r,b:s.b}}},setHow(k){howPage=k;state='how';render()},newGame(){newGame();render()}};
 musicFor('title');requestAnimationFrame(frame);
 
+// ===== on-foot platformer stages: Jim runs, jumps and swings his Lazord =====
+const WK={g:30,jv:12.8,run:5.6,pw:.34,ph:1.75};
+const WTHEME=[
+ {top:'#ffcf3a',face:'#5b6478',deep:'#262b3a',line:'rgba(255,255,255,.08)',far:'#1b2140',plat:'#8a93a8',name:'hangar'},
+ {top:'#b69cff',face:'#3b2a5a',deep:'#1a1030',line:'rgba(200,170,255,.10)',far:'#1e1238',plat:'#7d64b8',name:'cave'},
+ {top:'#ffe08a',face:'#5a4a2a',deep:'#2a2010',line:'rgba(255,230,160,.10)',far:'#2a1e10',plat:'#b0905a',name:'vault'}];
+function genWalk(st,si){
+ const R=rng(si*104729+7),loop=G.loop,d=st.wi+loop*1.2;
+ const S=[],PL=[],E=[],C=[],CK=[];
+ const seg=(x0,x1,y)=>S.push({x0,x1,y0:-40,y1:y});
+ S.push({x0:-9,x1:-6,y0:-40,y1:12});seg(-6,11,0);CK.push({x:1.5,y:0,on:true});
+ let x=11,h=0,lastCk=1.5,n=0;const end=st.len;
+ while(x<end){n++;const r=R();let gap=0,plat=false;const ph=h;
+  if(r<.36)gap=1.5+R()*(1.1+Math.min(.7,d*.25));
+  else if(r<.52&&n>2)gap=4.6+R()*.7,plat=true;
+  if(R()<.42)h=clamp(h+(R()<.55?1:-1),0,3);
+  if(gap>0&&!plat&&h>ph)gap=Math.min(gap,2.3);
+  if(plat){const py=Math.max(ph,h)+1.5;PL.push({x0:x+gap/2-1.15,x1:x+gap/2+1.15,y:py});for(let i=0;i<3;i++)C.push({x:x+gap/2-.6+i*.6,y:py+1.2})}
+  else if(gap>0&&R()<.6)for(let i=0;i<3;i++)C.push({x:x+gap/2+(i-1)*.75,y:Math.max(ph,h)+2.2-(i===1?-.4:0)});
+  x+=gap;const L=Math.round(6+R()*5);seg(x,x+L,h);
+  if(x-lastCk>26){CK.push({x:x+1.2,y:h,on:false});lastCk=x+1.2}
+  else if(n>1){
+   if(R()<.6+d*.12){const brute=d>=1.6&&R()<.35;E.push({k:brute?'brute':'bot',x:x+L*.65,y:h,a:x+.6,b:x+L-.6,vx:(R()<.5?-1:1)*(1.3+d*.2),hp:brute?2:1,w:brute?.55:.42,h:brute?1.4:1,t:R()*6,hit:0})}
+   if(d>=.6&&R()<.3+d*.1)E.push({k:'drone',cx:x+L/2,cy:h+2.5,x:x+L/2,y:h+2.5,r:1.4+R(),hp:1,w:.42,h:.6,t:R()*6,fireT:1.5+R()*2,hit:0});
+   if(R()<.35){PL.push({x0:x+1.5,x1:x+3.7,y:h+2.1});for(let i=0;i<3;i++)C.push({x:x+2+i*.6,y:h+3.2})}
+   else if(R()<.5)for(let i=0;i<3;i++)C.push({x:x+L*.3+i*.7,y:h+.7})}
+  x+=L}
+ seg(x,x+18,h);S.push({x0:x+18,x1:x+21,y0:-40,y1:h+12});
+ Object.assign(G,{wS:S,wP:PL,wE:E,wC:C.map(c=>Object.assign(c,{got:false})),wCK:CK,wO:[],wp:[],goalX:x+9,goalY:h,goalGot:0,wt:0,camX:-2,camY:0,theme:WTHEME[st.wi%3]});
+ G.J={x:1.5,y:0,vx:0,vy:0,dir:1,on:true,coy:0,jb:0,sw:0,swCd:0,inv:0,dead:0,anim:0,ck:CK[0]};G.endZ=1e9}
+function wburst(x,y,n,col,sp){for(let i=0;i<n;i++){const a=Math.random()*6.283,v=(sp||4)*(.3+Math.random());G.wp.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v+1.5,life:.5+Math.random()*.5,c:col||(Math.random()<.5?'#ffd23a':'#ff7a2e')})}}
+function wpop(n,x,y){G.score+=0;addScore(n);G.pops.push({t:1,n,wx:x,wy:y})}
+function walkSolidHit(x,y,pw,ph){for(const s of G.wS)if(x+pw>s.x0&&x-pw<s.x1&&y<s.y1-.001&&y+ph>s.y0)return s;return null}
+function swingBox(J){const x0=J.dir>0?J.x-.2:J.x-1.95;return{x0,x1:x0+2.15,y0:J.y-.1,y1:J.y+2.4}}
+function updateWalk(dt){const J=G.J;G.wt+=dt;
+ for(const p of G.wp){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy-=12*dt;p.life-=dt}G.wp=G.wp.filter(p=>p.life>0);
+ let ix=INPUT.x,jump=INPUT.jumpE,strike=INPUT.strikeE;INPUT.jumpE=INPUT.strikeE=false;
+ if(window.__BOT){const b=walkBot();ix=b.x;jump=b.j;strike=b.s}
+ if(J.dead>0){J.dead-=dt;if(J.dead<=0)walkRespawn();updateWalkFoes(dt);return}
+ ix=Math.abs(ix)<.18?0:Math.sign(ix)*Math.min(1,Math.abs(ix)*1.25);
+ J.vx+=(ix*WK.run-J.vx)*Math.min(1,dt*(J.on?14:8));if(ix)J.dir=ix>0?1:-1;
+ if(jump)J.jb=.15;J.jb-=dt;J.coy=J.on?.1:J.coy-dt;
+ if(J.jb>0&&J.coy>0){J.vy=WK.jv;J.on=false;J.coy=0;J.jb=0;sfx('jump');wburst(J.x,J.y,5,'#cfd6e8',2)}
+ J.vy=Math.max(-22,J.vy-WK.g*dt);
+ J.x+=J.vx*dt;const sh=walkSolidHit(J.x,J.y,WK.pw,WK.ph);if(sh){if(J.vx>0||J.x<(sh.x0+sh.x1)/2)J.x=sh.x0-WK.pw-.001;else J.x=sh.x1+WK.pw+.001;J.vx=0}
+ const py=J.y;J.y+=J.vy*dt;J.on=false;
+ for(const s of G.wS){if(J.x+WK.pw>s.x0&&J.x-WK.pw<s.x1&&J.y<s.y1&&J.y+WK.ph>s.y0){if(J.vy<=0&&py>=s.y1-.08){J.y=s.y1;J.vy=0;J.on=true}else if(J.vy>0){J.y=s.y0-WK.ph;J.vy=0}}}
+ if(J.vy<=0)for(const p of G.wP){if(J.x+WK.pw*.6>p.x0&&J.x-WK.pw*.6<p.x1&&py>=p.y-.02&&J.y<=p.y){J.y=p.y;J.vy=0;J.on=true}}
+ J.swCd-=dt;if(strike&&J.swCd<=0){J.sw=.3;J.swCd=.34;sfx('swing')}J.sw=Math.max(0,J.sw-dt);J.inv=Math.max(0,J.inv-dt);J.anim+=Math.abs(J.vx)*dt;
+ if(J.y<-5){walkDie('Watch your step!');return}
+ for(const c of G.wCK)if(!c.on&&J.x>c.x){c.on=true;J.ck=c;msg('Checkpoint!',1.2);sfx('fuel')}
+ for(const c of G.wC)if(!c.got&&Math.abs(c.x-J.x)<.55&&c.y>J.y-.2&&c.y<J.y+WK.ph+.3){c.got=true;wpop(PTS.crystal,c.x,c.y);wburst(c.x,c.y,6,'#8ff4ff',2.5);sfx('crystal')}
+ updateWalkFoes(dt);
+ if(!G.goalGot&&J.alive!==false&&J.x>G.goalX-.7&&J.dead<=0){G.goalGot=1;wburst(G.goalX,G.goalY+2.2,40,'#fff6c8',6);wburst(G.goalX,G.goalY+2.2,24,'#8fe8ff',5);msg(G.st.fin?'You found the Light Ring!':'Light Ring piece found!',2.6);stageClear()}}
+function updateWalkFoes(dt){const J=G.J,alive=J.dead<=0,sb=J.sw>.05&&alive?swingBox(J):null;
+ for(const e of G.wE){if(e.dead)continue;e.t+=dt;e.hit=Math.max(0,e.hit-dt);
+  if(e.k==='drone'){e.x=e.cx+Math.sin(e.t*.8)*e.r;e.y=e.cy+Math.sin(e.t*2.1)*.3;const dx=J.x-e.x;
+   if(alive&&Math.abs(dx)<9){e.fireT-=dt;if(e.fireT<=0){e.fireT=Math.max(1.6,3.2-G.loop*.3)+Math.random();const dy=(J.y+1)-e.y,l=Math.hypot(dx,dy)||1,v=3.6+G.loop*.4;G.wO.push({x:e.x,y:e.y,vx:dx/l*v,vy:dy/l*v,life:5});sfx('plasma')}}}
+  else{if(e.hit<=0)e.x+=e.vx*dt;if(e.x<e.a){e.x=e.a;e.vx=Math.abs(e.vx)}if(e.x>e.b){e.x=e.b;e.vx=-Math.abs(e.vx)}}
+  const ey0=e.k==='drone'?e.y-e.h/2:e.y,ey1=ey0+e.h;
+  if(sb&&e.hit<=0&&e.x+e.w>sb.x0&&e.x-e.w<sb.x1&&ey1>sb.y0&&ey0<sb.y1){e.hp--;e.hit=.32;wburst(e.x,(ey0+ey1)/2,6,'#bfe8ff',3);
+   if(e.hp<=0){e.dead=true;wpop(PTS[e.k],e.x,ey1);wburst(e.x,(ey0+ey1)/2,18);sfx('boom')}else{sfx('ping');if(e.k!=='drone'){e.x=clamp(e.x+J.dir*.9,e.a,e.b);e.hit=.6}}continue}
+  if(alive&&J.x+WK.pw>e.x-e.w&&J.x-WK.pw<e.x+e.w&&J.y+WK.ph>ey0&&J.y<ey1){
+   if(J.vy<-1&&J.y>ey0+e.h*.45&&e.k!=='drone'){e.hp--;J.vy=9;if(e.hp<=0){e.dead=true;wpop(PTS[e.k],e.x,ey1);wburst(e.x,ey1,16);sfx('boom')}else{e.hit=.3;sfx('ping')}}
+   else if(J.inv<=0){walkDie(e.k==='drone'?'Zapped by a drone!':'Bumped by a scrap bot!');return}}}
+ for(const o of G.wO){o.x+=o.vx*dt;o.y+=o.vy*dt;o.life-=dt;
+  if(sb&&o.x>sb.x0&&o.x<sb.x1&&o.y>sb.y0&&o.y<sb.y1){o.life=0;wpop(PTS.orb,o.x,o.y);wburst(o.x,o.y,8,'#ff9ae8',3);sfx('ping');continue}
+  if(alive&&J.inv<=0&&Math.abs(o.x-J.x)<WK.pw+.12&&o.y>J.y&&o.y<J.y+WK.ph){o.life=0;walkDie('Hit by a drone shot!');return}
+  if(walkSolidHit(o.x,o.y,.05,.05))o.life=0}
+ G.wO=G.wO.filter(o=>o.life>0)}
+function walkDie(why){const J=G.J;if(J.dead>0)return;J.dead=1.6;G.lives--;wburst(J.x,J.y+1,26,'#9fe0ff',5);wburst(J.x,J.y+1,14);sfx('die');G.shake=.8;G.hitFlash=1;msg(why,1.8)}
+function walkRespawn(){const J=G.J;if(G.lives<=0){state='over';save.hi=Math.max(save.hi||0,G.score);persist();sfx('over');musicFor(null);return}
+ const c=J.ck;Object.assign(J,{x:c.x,y:c.y+.05,vx:0,vy:0,dir:1,on:false,inv:2.2,sw:0,dead:0});G.wO=[];
+ for(const e of G.wE)if(!e.dead&&Math.abs(e.x-c.x)<3){if(e.k==='drone')e.t+=3;else e.x=e.b}msg('Get ready!',1.2)}
+// test/demo bot: run right, jump gaps/walls/foes, swing at anything close
+function walkBot(){const J=G.J;let j=false,s=false;const ahead=J.x+.9;
+ const ground=G.wS.some(q=>ahead>q.x0&&ahead<q.x1&&q.y1<=J.y+.05&&q.y1>J.y-1.5)||G.wP.some(p=>ahead>p.x0&&ahead<p.x1&&Math.abs(p.y-J.y)<.1);
+ const wall=walkSolidHit(J.x+.6,J.y+.3,WK.pw,WK.ph-.4);if(J.on&&(!ground||wall))j=true;
+ const plat=G.wP.find(p=>p.x0-J.x<1.6&&p.x0-J.x>.4&&p.y>J.y+.5);if(plat&&J.on&&!G.wS.some(q=>J.x+2.4>q.x0&&J.x+2.4<q.x1&&Math.abs(q.y1-J.y)<1.1))j=true;
+ for(const e of G.wE){if(e.dead)continue;const dx=e.x-J.x;if(dx>-.6&&dx<2.1&&Math.abs((e.k==='drone'?e.y:e.y+.5)-(J.y+1))<1.8)s=true}
+ for(const o of G.wO){const dx=o.x-J.x;if(dx>-.5&&dx<1.9&&o.y>J.y-.3&&o.y<J.y+2.4)s=true}
+ let x=1;if(!J.on&&J.vy<0){const below=G.wS.some(q=>J.x>q.x0&&J.x<q.x1&&q.y1<=J.y)||G.wP.some(p=>J.x>p.x0&&J.x<p.x1&&p.y<=J.y);if(!below)x=1}
+ return{x,j,s}}
+// ---------- drawing ----------
+const WCROP=[80,12,226];
+function walkView(o){const s=o.s,port=s.h>s.w*1.05,T=clamp(Math.min(s.w/(port?9.5:11),(o.bot-o.top)/9.2),26,64);const base=port?Math.min(o.bot-T*1.1,o.ctrlTop-T*.15):o.bot-T*1.1;return{T,base}}
+function drawWalk(o){const J=G.J,th=G.theme,{T,base}=walkView(o),s=o.s;const visW=s.w/T;
+ const tx=J.x-visW*.36,ty=Math.max(0,J.y-2.2);G.camX+=(Math.max(-6.5,tx)-G.camX)*Math.min(1,.12);G.camY+=(ty-G.camY)*.08;
+ const sk=G.shake>0?(Math.random()-.5)*G.shake*8:0;
+ const X=x=>s.l+(x-G.camX)*T+sk,Y=y=>base-(y-G.camY)*T;
+ drawSky(TIME,.4);
+ // parallax backdrop
+ ctx.fillStyle=th.far;for(let i=-1;i<visW/3+2;i++){const wx=Math.floor(G.camX*.4/3)*3+i*3,sx=s.l+(wx-G.camX*.4)*T,hh=(2+((wx*7919)%5+5)%5)*T*.7;
+  if(th.name==='cave'){ctx.beginPath();ctx.moveTo(sx,0);ctx.lineTo(sx+T*1.5,hh*.8);ctx.lineTo(sx+T*3,0);ctx.fill()}
+  else if(th.name==='vault'){ctx.fillRect(sx+T*.6,base-hh-T*2,T*1.1,hh+T*4);ctx.fillRect(sx+T*.3,base-hh-T*2.3,T*1.7,T*.4)}
+  else{ctx.fillRect(sx,base-hh-T,T*2.4,hh+T*3);ctx.fillStyle='rgba(255,210,90,.25)';ctx.fillRect(sx+T*.4,base-hh-T*.6,T*.3,T*.3);ctx.fillStyle=th.far}}
+ // solids
+ for(const q of G.wS){const x0=X(q.x0),x1=X(q.x1);if(x1<-10||x0>W+10)continue;const yt=Y(q.y1),yb=Math.min(H,Y(q.y0));
+  const g=ctx.createLinearGradient(0,yt,0,yt+T*3);g.addColorStop(0,th.face);g.addColorStop(1,th.deep);ctx.fillStyle=g;ctx.fillRect(x0,yt,x1-x0,yb-yt);
+  ctx.strokeStyle=th.line;ctx.lineWidth=1;ctx.beginPath();for(let k=Math.ceil(q.x0);k<q.x1;k++){ctx.moveTo(X(k),yt);ctx.lineTo(X(k),Math.min(yb,yt+T*3))}for(let k=1;k<4;k++){ctx.moveTo(x0,yt+k*T);ctx.lineTo(x1,yt+k*T)}ctx.stroke();
+  ctx.fillStyle=th.top;ctx.fillRect(x0,yt,x1-x0,Math.max(3,T*.14));ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(x0,yt+Math.max(3,T*.14),x1-x0,2)}
+ for(const p of G.wP){const x0=X(p.x0),x1=X(p.x1),y=Y(p.y);if(x1<0||x0>W)continue;ctx.fillStyle=th.plat;ctx.fillRect(x0,y,x1-x0,T*.32);ctx.fillStyle=th.top;ctx.fillRect(x0,y,x1-x0,Math.max(2,T*.08));ctx.fillStyle='rgba(0,0,0,.3)';for(let k=x0+T*.25;k<x1-T*.2;k+=T*.5)ctx.fillRect(k,y+T*.12,T*.12,T*.12)}
+ // checkpoints
+ for(const c of G.wCK){const x=X(c.x),y=Y(c.y);if(x<-30||x>W+30)continue;ctx.fillStyle='#9aa3b8';ctx.fillRect(x-T*.06,y-T*1.6,T*.12,T*1.6);const col=c.on?'#4dff7a':'#ff5a5a';ctx.save();ctx.shadowColor=col;ctx.shadowBlur=T*.5;circ(x,y-T*1.7,T*.2,col);ctx.restore()}
+ // crystals
+ for(const c of G.wC){if(c.got)continue;const x=X(c.x),y=Y(c.y)+Math.sin(TIME*3+c.x)*T*.06;if(x<-20||x>W+20)continue;const sx=Math.abs(Math.cos(TIME*2.4+c.x))*T*.2+T*.04;poly([[x,y-T*.3],[x+sx,y],[x,y+T*.3],[x-sx,y]],'#7ff0ff','#e8ffff',1.5)}
+ // goal: pedestal with the ring piece (or the whole Light Ring on the last vault)
+ {const x=X(G.goalX),y=Y(G.goalY);ctx.fillStyle='#8a7a6a';ctx.fillRect(x-T*.6,y-T*1.1,T*1.2,T*1.1);ctx.fillStyle='#b8a890';ctx.fillRect(x-T*.8,y-T*1.25,T*1.6,T*.22);
+  if(!G.goalGot){const by=y-T*2.2+Math.sin(TIME*2)*T*.12;if(G.st.fin)drawLightRing(x,by,T*.7,RINGN,TIME,true);else drawRingPiece(x,by,T*.7,G.si%NST,TIME)}}
+ // foes
+ for(const e of G.wE){if(e.dead)continue;const x=X(e.x),y=Y(e.y);if(x<-40||x>W+40)continue;const fl=e.hit>0&&Math.floor(TIME*20)%2;
+  if(e.k==='drone'){ctx.save();ctx.translate(x,y);ctx.fillStyle=fl?'#fff':'#7a4fd0';ctx.beginPath();ctx.ellipse(0,0,T*.45,T*.24,0,0,6.283);ctx.fill();ctx.fillStyle='#3a2470';ctx.fillRect(-T*.5,-T*.04,T,T*.08);
+   const wv=Math.abs(Math.sin(TIME*30))*T*.35;ctx.fillStyle='rgba(220,220,255,.6)';ctx.fillRect(-T*.35-wv/2,-T*.36,wv,T*.05);ctx.fillRect(T*.35-wv/2,-T*.36,wv,T*.05);circ(0,T*.02,T*.12,'#ffe14a');circ(0,T*.02,T*.05,'#300');ctx.restore()}
+  else{const big=e.k==='brute',w=e.w*T*2,h=e.h*T,dir=e.vx>0?1:-1;ctx.fillStyle=fl?'#fff':(big?'#d8742e':'#8f97a8');ctx.fillRect(x-w/2,y-h,w,h*.78);ctx.fillStyle='#2b3040';ctx.fillRect(x-w/2,y-h*.22,w,h*.22);
+   ctx.fillStyle='#1a1d28';const wb=Math.sin(e.t*10)*T*.05;circ(x-w*.28,y-h*.08+wb,h*.11,'#111');circ(x+w*.28,y-h*.08-wb,h*.11,'#111');
+   ctx.fillStyle='#200';ctx.fillRect(x-w*.36,y-h*.82,w*.72,h*.2);ctx.save();ctx.shadowColor='#ff3030';ctx.shadowBlur=T*.3;ctx.fillStyle='#ff4040';ctx.fillRect(x+dir*w*.08-w*.12,y-h*.78,w*.24,h*.12);ctx.restore();
+   ctx.fillStyle='#bfc6d6';ctx.fillRect(x-T*.03,y-h-T*.25,T*.06,T*.25);circ(x,y-h-T*.27,T*.07,big?'#ffcf3a':'#ff6a6a')}}
+ for(const o of G.wO){const x=X(o.x),y=Y(o.y);ctx.save();ctx.shadowColor='#ff5ad8';ctx.shadowBlur=T*.4;circ(x,y,T*.14,'#ff9ae8');circ(x,y,T*.06,'#fff');ctx.restore()}
+ // Jim
+ if(J.dead<=0&&!(J.inv>0&&Math.floor(TIME*12)%2))drawFootJim(X(J.x),Y(J.y),T,J);
+ // particles and pops
+ for(const p of G.wp){ctx.globalAlpha=clamp(p.life*2,0,1);ctx.fillStyle=p.c;ctx.fillRect(X(p.x)-T*.06,Y(p.y)-T*.06,T*.12,T*.12)}ctx.globalAlpha=1;
+ for(const p of G.pops)if(p.wx!=null){ctx.globalAlpha=clamp(p.t*1.5,0,1);txt(null,'+'+p.n,X(p.wx),Y(p.wy)-(1-p.t)*T*1.2-T*.3,17,'#ffe14a');ctx.globalAlpha=1}
+ if(state==='clear'){const x=X(G.goalX),y=Y(G.goalY)-T*2.4;if(G.st.fin)drawLightRing(x,y,T*.75,RINGN,TIME,true);else drawRingPiece(x,y-(3.4-G.clearT)*T*.6,T*.7,G.si%NST,TIME)}}
+// Jim on foot: pixel-built robe body + his pixel likeness head (cropped from jim.png, never a photo)
+function drawFootJim(x,y,T,J){const u=T/10,d=J.dir;ctx.save();ctx.translate(Math.round(x),Math.round(y));ctx.scale(d,1);
+ const run=J.on&&Math.abs(J.vx)>.5,ph=Math.sin(J.anim*3.2),air=!J.on;
+ const leg=(ox,lift)=>{ctx.fillStyle='#cbb48a';ctx.fillRect(ox-1*u,-5*u-lift,2*u,3.4*u);ctx.fillStyle='#2a1a10';ctx.fillRect(ox-1.2*u,-2*u-lift,2.8*u,2*u)};
+ if(air){leg(-1.3*u,1.2*u);leg(1.6*u,-.2*u)}else if(run){leg(-1.2*u+ph*1.6*u,Math.max(0,-ph)*u);leg(1.2*u-ph*1.6*u,Math.max(0,ph)*u)}else{leg(-1.3*u,0);leg(1.3*u,0)}
+ // robe
+ ctx.fillStyle='#5a3820';ctx.beginPath();ctx.moveTo(-3.4*u,-4.2*u);ctx.lineTo(3.6*u,-4.2*u);ctx.lineTo(2.9*u,-12*u);ctx.lineTo(-2.9*u,-12*u);ctx.closePath();ctx.fill();
+ ctx.fillStyle='#e3d2a8';ctx.fillRect(-1.1*u,-12*u,2.6*u,6*u);ctx.fillStyle='#3a2414';ctx.fillRect(-2.9*u,-8*u,5.8*u,1.1*u);ctx.fillStyle='#c9a24a';ctx.fillRect(.2*u,-8*u,1*u,1.1*u);
+ // back arm
+ ctx.fillStyle='#4a2c18';ctx.fillRect(-3.4*u,-11.4*u,1.8*u,4.6*u);
+ // Lazord + front arm
+ let a0;if(J.sw>0){const p=1-J.sw/.3;a0=-2.1+p*2.6}else a0=air?-1.9:-1.35+Math.sin(TIME*2)*.04;
+ const hx=2.6*u,hy=-8.6*u,L=T*1.35,bx=hx+Math.cos(a0)*L,by=hy+Math.sin(a0)*L;
+ if(J.sw>0){const p=1-J.sw/.3;ctx.fillStyle='rgba(120,220,255,'+(.35*(1-p*.6))+')';ctx.beginPath();ctx.moveTo(hx,hy);ctx.arc(hx,hy,L*1.02,-2.1,a0);ctx.closePath();ctx.fill()}
+ lazord(hx,hy,bx,by,Math.max(2,u*.9));
+ ctx.fillStyle='#5a3820';ctx.fillRect(1.2*u,-11.4*u,1.9*u,2.6*u);ctx.fillStyle='#f1b895';circ(hx,hy,u*.9,'#f1b895');
+ // head (pixel likeness)
+ const hs=8.4*u;if(JIM_OK){ctx.imageSmoothingEnabled=false;ctx.drawImage(JIM,WCROP[0],WCROP[1],WCROP[2],WCROP[2],-hs/2+.3*u,-12*u-hs*.92,hs,hs);ctx.imageSmoothingEnabled=true}
+ else{circ(0,-15.5*u,3.4*u,'#f1b895');ctx.fillStyle='#8a8a8f';ctx.fillRect(-3*u,-19*u,6*u,1.6*u);ctx.fillStyle='#e8e6e2';ctx.fillRect(-2.6*u,-14.6*u,5.2*u,2.4*u)}
+ ctx.restore()}
+// the Lazord: Jim's laser-sword (cyan-white beam, gold hilt)
+function lazord(x0,y0,x1,y1,w){ctx.lineCap='round';ctx.strokeStyle='rgba(70,230,255,.25)';ctx.lineWidth=w*3.4;ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x1,y1);ctx.stroke();ctx.strokeStyle='rgba(110,240,255,.7)';ctx.lineWidth=w*1.8;ctx.stroke();ctx.strokeStyle='#f2ffff';ctx.lineWidth=w*.8;ctx.stroke();
+ const dx=x0-x1,dy=y0-y1,l=Math.hypot(dx,dy)||1,ux=dx/l,uy=dy/l;ctx.lineCap='butt';ctx.strokeStyle='#d9a93a';ctx.lineWidth=w*1.7;ctx.beginPath();ctx.moveTo(x0-ux*w,y0-uy*w);ctx.lineTo(x0+ux*w*3.5,y0+uy*w*3.5);ctx.stroke();ctx.strokeStyle='#6b4a14';ctx.lineWidth=w*1.8;ctx.beginPath();ctx.moveTo(x0+ux*w*1.2,y0+uy*w*1.2);ctx.lineTo(x0+ux*w*1.8,y0+uy*w*1.8);ctx.stroke()}
+// ---------- the Light Ring (original design: a band of light in RINGN arc pieces) ----------
+function drawLightRing(cx,cy,r,have,t,radiant){ctx.save();const N=RINGN,gap=.06;
+ if(radiant&&have>=N){const g=ctx.createRadialGradient(cx,cy,r*.2,cx,cy,r*3.2);g.addColorStop(0,'rgba(255,250,215,.75)');g.addColorStop(.35,'rgba(140,230,255,.35)');g.addColorStop(1,'rgba(140,230,255,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,r*3.2,0,6.283);ctx.fill();
+  ctx.globalAlpha=.55;ctx.fillStyle='#fff8d0';for(let i=0;i<12;i++){const a=t*.5+i*.5236;ctx.beginPath();ctx.moveTo(cx+Math.cos(a-.05)*r*1.2,cy+Math.sin(a-.05)*r*1.2);ctx.lineTo(cx+Math.cos(a)*r*(2.6+Math.sin(t*3+i)*.3),cy+Math.sin(a)*r*(2.6+Math.sin(t*3+i)*.3));ctx.lineTo(cx+Math.cos(a+.05)*r*1.2,cy+Math.sin(a+.05)*r*1.2);ctx.fill()}ctx.globalAlpha=1}
+ ctx.lineCap='round';
+ for(let i=0;i<N;i++){const a0=-Math.PI/2+i*6.283/N+gap,a1=-Math.PI/2+(i+1)*6.283/N-gap;ctx.beginPath();ctx.arc(cx,cy,r,a0,a1);
+  if(i<have){ctx.shadowColor='#8fe8ff';ctx.shadowBlur=r*.5;ctx.strokeStyle='rgba(120,225,255,.9)';ctx.lineWidth=r*.34;ctx.stroke();ctx.shadowBlur=0;ctx.strokeStyle='#fffbe0';ctx.lineWidth=r*.14;ctx.stroke()}
+  else{ctx.strokeStyle='rgba(150,160,200,.35)';ctx.lineWidth=r*.26;ctx.stroke()}}
+ // small gem-stars at the 4 compass points (original ornament)
+ if(have>=N)for(let i=0;i<4;i++){const a=i*1.5708+t*.3,x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r;circ(x,y,r*.12,'#fff')}
+ ctx.restore()}
+function drawRingPiece(cx,cy,r,i,t){ctx.save();const N=RINGN,a0=-Math.PI/2+i*6.283/N+.06,a1=-Math.PI/2+(i+1)*6.283/N-.06,am=(a0+a1)/2;
+ // draw the piece centered on (cx,cy)
+ const ox=cx-Math.cos(am)*r,oy=cy-Math.sin(am)*r;const g=ctx.createRadialGradient(cx,cy,0,cx,cy,r*1.3);g.addColorStop(0,'rgba(255,250,215,.6)');g.addColorStop(1,'rgba(140,230,255,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,r*1.3,0,6.283);ctx.fill();
+ ctx.lineCap='round';ctx.beginPath();ctx.arc(ox,oy,r,a0-.25,a1+.25);ctx.shadowColor='#8fe8ff';ctx.shadowBlur=r*.6;ctx.strokeStyle='rgba(120,225,255,.95)';ctx.lineWidth=r*.38;ctx.stroke();ctx.shadowBlur=0;ctx.strokeStyle='#fffbe0';ctx.lineWidth=r*.16;ctx.stroke();ctx.restore()}
+
 </script><!--share--><style>#dock{position:fixed;z-index:60;display:none;gap:6px;top:0;left:0}#dock.inl{position:static;display:flex;justify-content:center;flex-wrap:wrap;margin:6px auto}
 .dk{box-sizing:border-box;height:34px;border-radius:17px;border:2px solid #fff;background:rgba(0,0,0,.66);color:#fff;font:bold 14px/30px system-ui,-apple-system,Segoe UI,sans-serif;padding:0 12px;margin:0;white-space:nowrap;touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer;flex:none}
 .dk.ic{width:40px;padding:0;font-size:17px}#dock.inl .dk{height:44px;line-height:40px;font-size:17px;padding:0 18px;border-radius:22px;border-width:3px}
 #dockHint{position:fixed;z-index:61;display:none;box-sizing:border-box;background:rgba(10,10,20,.92);color:#fff;border:2px solid #fff;border-radius:12px;font:13px/1.3 system-ui,-apple-system,sans-serif;padding:7px 36px 7px 10px;top:0;left:0}#dockHint.inl{position:relative;margin:4px auto;max-width:320px}
 #dockHintX{position:absolute;right:3px;top:50%;margin-top:-15px;width:30px;height:30px;border-radius:15px;border:0;background:#fff;color:#000;font:bold 15px sans-serif;padding:0;cursor:pointer}
 #shareToast{position:fixed;z-index:62;display:none;box-sizing:border-box;height:34px;border-radius:17px;border:2px solid #fff;background:#1f9d55;color:#fff;font:bold 13px/30px system-ui,sans-serif;text-align:center;white-space:nowrap;pointer-events:none;overflow:hidden}
-#inst,#ios,#ioshint{display:none!important}#dkProbe{position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}.dk.smp{position:relative;opacity:.62;text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:#ff5050}.dk.smp:after{content:'';position:absolute;left:5px;right:5px;top:50%;height:3px;margin-top:-1px;background:#ff3b3b;border-radius:2px;transform:rotate(-16deg);pointer-events:none}#dockHint.smpc{padding:9px 38px 10px 11px;font-size:14px}#dockHint.smpc b{color:#ffd84a}#smpBuy{display:block;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:8px 0 0;height:34px;border-radius:17px;border:2px solid #fff;background:#e0439a;color:#fff;font:bold 14px/30px system-ui,-apple-system,sans-serif;padding:0 14px;cursor:pointer;touch-action:manipulation}#smpBuy.off{background:#444;opacity:.85;cursor:default}#smpBack{position:fixed;inset:0;z-index:59;display:none;background:rgba(0,0,0,.55)}</style><div id="dock" role="toolbar" aria-label="Share and install"><button id="shareBtn" class="dk" type="button" aria-label="Share this game">🔗 Share</button><button id="instBtn" class="dk" type="button" aria-label="Install this game as an app">📲 Install</button></div><div id="dockHint" role="note">📲 On iPhone/iPad: tap Share <b>⬆</b> then “Add to Home Screen”.<button id="dockHintX" type="button" aria-label="Dismiss tip">✕</button></div><div id="shareToast" role="status" aria-live="polite">Link copied!</div><div id="dkProbe"></div><div id="smpBack"></div><script>(()=>{const SH={"title": "Jedi Jim's Rebel Mission", "text": "Play Jedi Jim's Rebel Mission — a free retro space shooter from Peter's Arcade!", "url": "https://ploug76.github.io/jedi-jims-rebel-mission/"},ALLOW=[],INLINE=null,SHTXT="🔗 Share",SMP=window.__SAMPLE||null,PAYI=({"bhs": "https://ko-fi.com/bookofheavenstudios/commissions?commissionAlias=5df889530a", "589": "https://ko-fi.com/five8nine/commissions?commissionAlias=5c81b9373a"})[SMP]||'',PRICE="$1.99";const $=i=>document.getElementById(i);
+#inst,#ios,#ioshint{display:none!important}#dkProbe{position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}.dk.smp{position:relative;opacity:.62;text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:#ff5050}.dk.smp:after{content:'';position:absolute;left:5px;right:5px;top:50%;height:3px;margin-top:-1px;background:#ff3b3b;border-radius:2px;transform:rotate(-16deg);pointer-events:none}#dockHint.smpc{padding:9px 38px 10px 11px;font-size:14px}#dockHint.smpc b{color:#ffd84a}#smpBuy{display:block;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:8px 0 0;height:34px;border-radius:17px;border:2px solid #fff;background:#e0439a;color:#fff;font:bold 14px/30px system-ui,-apple-system,sans-serif;padding:0 14px;cursor:pointer;touch-action:manipulation}#smpBuy.off{background:#444;opacity:.85;cursor:default}#smpBack{position:fixed;inset:0;z-index:59;display:none;background:rgba(0,0,0,.55)}#dock .dk{height:46px!important;line-height:42px!important;font-size:16px!important;border-radius:23px!important;padding:0 14px!important}#dock .dk.ic,#dock .dk.ic~#lbBtn{width:46px!important}#dockHint{font-size:16px!important}#smpLock p{font-size:16px!important}#palbCard .sub,#palbCard .src,#palbCard .note,#palbCard .err,#palbCard .mybest,#palbList li{font-size:16px!important}#palbList li{height:32px!important}#palbCard [style*='font-size:13px'],#palbCard [style*='font-size:14px']{font-size:16px!important}</style><div id="dock" role="toolbar" aria-label="Share and install"><button id="shareBtn" class="dk" type="button" aria-label="Share this game">🔗 Share</button><button id="instBtn" class="dk" type="button" aria-label="Install this game as an app">📲 Install</button></div><div id="dockHint" role="note">📲 On iPhone/iPad: tap Share <b>⬆</b> then “Add to Home Screen”.<button id="dockHintX" type="button" aria-label="Dismiss tip">✕</button></div><div id="shareToast" role="status" aria-live="polite">Link copied!</div><div id="dkProbe"></div><div id="smpBack"></div><script>(()=>{const SH={"title": "Jedi Jim's Rebel Mission", "text": "Play Jedi Jim's Rebel Mission — a free retro space adventure from Peter's Arcade!", "url": "https://ploug76.github.io/jedi-jims-rebel-mission/"},ALLOW=[],INLINE=null,SHTXT="🔗 Share",SMP=window.__SAMPLE||null,PAYI=({"bhs": "https://ko-fi.com/bookofheavenstudios/commissions?commissionAlias=5df889530a", "589": "https://ko-fi.com/five8nine/commissions?commissionAlias=5c81b9373a"})[SMP]||'',PRICE="$1.99";const $=i=>document.getElementById(i);
 if(SMP){SH.url=SH.url+'?sample='+encodeURIComponent(SMP);const h0=$('dockHint');h0.classList.add('smpc');h0.setAttribute('role','dialog');h0.innerHTML='<b>Sample version</b> — install the full game on your phone for '+PRICE+'<button id="smpBuy" type="button"'+(PAYI?'':' class="off" aria-disabled="true"')+'>'+(PAYI?'💳 Buy '+PRICE:'Checkout coming soon')+'</button><button id="dockHintX" type="button" aria-label="Close">✕</button>'}
-const bk=$('smpBack'),dock=$('dock'),sb=$('shareBtn'),ib=$('instBtn'),hint=$('dockHint'),hx=$('dockHintX'),toastEl=$('shareToast'),probe=$('dkProbe');
+if(!SMP)SH.url=SH.url+'?sample='+"bhs";const bk=$('smpBack'),dock=$('dock'),sb=$('shareBtn'),ib=$('instBtn'),hint=$('dockHint'),hx=$('dockHintX'),toastEl=$('shareToast'),probe=$('dkProbe');
 if(INLINE){const a=document.querySelector(INLINE);if(a){a.after(dock);dock.after(hint)}dock.classList.add('inl');hint.classList.add('inl')}
 const standalone=()=>matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: minimal-ui)').matches||navigator.standalone===true;
 const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 let dp=null,installed=false,hintOn=false,hintAuto=false,toastUntil=0,toastFor=null,force=false,last=null;const HK='pa_ioshint_seen';
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();if(SMP)return;dp=e;tick()});addEventListener('appinstalled',()=>{installed=true;dp=null;hintOn=false;tick()});
 const canInstall=()=>SMP?!standalone():(!standalone()&&!installed&&!!(dp||isIOS||force));
-function vis(){try{return !!(state==='title')}catch(e){return false}}
+function vis(){try{return !!((state==='title'||state==='over'))}catch(e){return false}}
 function safe(){const c=getComputedStyle(probe);return{t:parseFloat(c.paddingTop)||0,r:parseFloat(c.paddingRight)||0,b:parseFloat(c.paddingBottom)||0,l:parseFloat(c.paddingLeft)||0}}
 function tapRects(){const out=[];let T=b=>[b.x,b.y,b.w,b.h];try{if(typeof OXs!=='undefined'&&typeof SC!=='undefined')T=b=>[b.x*SC+OXs,b.y*SC+OYs,b.w*SC,b.h*SC]}catch(e){}
  try{if(Array.isArray(menuBtns))menuBtns.forEach(b=>out.push(T(b).concat('canvas')))}catch(e){}
@@ -618,12 +821,12 @@ window.__share=window.__dock={share,install,vis,tick,tapRects,SH,get last(){retu
 #smpLock .b{display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:100%;min-height:48px;margin:8px 0 0;border-radius:12px;border:3px solid #fff;background:#3a2f7a;color:#fff;font:bold 17px system-ui,-apple-system,sans-serif;text-decoration:none;cursor:pointer;padding:0 10px}
 #smpLock .b.buy{background:#1f9d55;font-size:18px}#smpLock .b.off{background:#555;opacity:.75}#smpLock .lnk{display:block;margin-top:10px;color:#cfe0ff;font-size:14px}</style>
 <div id="smpLock" role="dialog" aria-modal="true" aria-label="Free sample complete"><div class="c"><div class="k">🔒</div><h2>Free sample complete!</h2><p id="smpLockTxt"></p><a id="smpLockBuy" class="b buy" target="_blank" rel="noopener">💳 Unlock the full game</a><button id="smpLockLb" class="b" type="button">🏆 Leaderboard &amp; my score</button><a id="smpLockMore" class="lnk">◀ More free samples</a></div></div>
-<script>(()=>{const SMP=window.__SAMPLE;if(!SMP)return;const C={"when": "!!window.__smpWant||(typeof G!=='undefined'&&!!G&&G.si>=2&&(state==='play'||state==='intro'||state==='clear'))", "secs": 900, "label": "stages 1–2"},PAY=({"bhs": "https://ko-fi.com/bookofheavenstudios/commissions?commissionAlias=5df889530a", "589": "https://ko-fi.com/five8nine/commissions?commissionAlias=5c81b9373a"})[SMP]||'',PRICE="$1.99",R=location.pathname.split('/')[1]||'x',TK='pa_sample_t:'+R;const $=i=>document.getElementById(i);
+<script>(()=>{const SMP=window.__SAMPLE;if(!SMP)return;const C={"when": "!!window.__smpWant||(typeof G!=='undefined'&&!!G&&G.si>=3&&(state==='play'||state==='intro'||state==='clear'))", "secs": 900, "label": "stages 1–3"},PAY=({"bhs": "https://ko-fi.com/bookofheavenstudios/commissions?commissionAlias=5df889530a", "589": "https://ko-fi.com/five8nine/commissions?commissionAlias=5c81b9373a"})[SMP]||'',PRICE="$1.99",R=location.pathname.split('/')[1]||'x',TK='pa_sample_t:'+R;const $=i=>document.getElementById(i);
 const el=$('smpLock'),buy=$('smpLockBuy'),lb=$('smpLockLb'),more=$('smpLockMore');
 $('smpLockTxt').textContent='You played '+C.label+' of the free sample. Unlock the full game for '+PRICE+': every level, no time limit, and it installs on your phone like an app.';
 if(PAY){buy.href=PAY;buy.textContent='💳 Unlock the full game · '+PRICE}else{buy.classList.add('off');buy.textContent='Checkout coming soon';buy.removeAttribute('href')}
 more.href=SMP==='589'?'https://ploug76.github.io/589-studios/#games':'https://ploug76.github.io/book-of-heaven-studios/#games';
-const W=s=>{if(!s)return()=>false;const f=Function('try{return !!('+s+')}catch(e){return false}');return f};const when=W(C.when),onTitle=W("state==='title'");
+const W=s=>{if(!s)return()=>false;const f=Function('try{return !!('+s+')}catch(e){return false}');return f};const when=W(C.when),onTitle=W("(state==='title'||state==='over')");
 let used=+localStorage.getItem(TK)||0,locked=false,last=performance.now(),saved=0;
 const inLb=t=>{const o=document.getElementById('palbOv');return !!(o&&t&&o.contains(t))};
 ['pointerdown','pointerup','pointermove','touchstart','touchend','touchmove','mousedown','mouseup','click','wheel'].forEach(ev=>el.addEventListener(ev,e=>e.stopPropagation(),{passive:true}));
