@@ -198,11 +198,13 @@ function killBoss(){const B=G.boss;B.alive=false;B.dieT=2.2;addScore(PTS.boss*(B
 // ===== world rendering (isometric projection) =====
 const CAM={ox:0,oy:0,fx:0,fy:0,lx:0,ly:0,a:0,u:30,z:0,port:false};
 function setCam(top,bot){const port=H>W*1.12;CAM.port=port;let F,L,u;
- if(port){F=[.36,-.93];L=[.94,.34];u=Math.min(W/9.6,(bot-top)/15)}else{F=[.894,-.447];L=[.894,.447];u=Math.min((bot-top)/8.6,W/24)}
+ const bossLive=typeof G!=='undefined'&&G&&G.bossOn&&G.boss&&G.boss.alive;
+ if(port){F=[.36,-.93];L=[.94,.34];u=Math.min(W/9.6,(bot-top)/15)}else{// landscape boss fight: ease the camera back a little and flatten the view so the boss (Bucketon's dome) stays below the HUD + boss bar
+  CAM.lb=(CAM.lb||0)+((bossLive?1:0)-(CAM.lb||0))*.05;const k=CAM.lb,fx=.894+(.95-.894)*k,fy=-.447+(.447-.31)*k,fl=Math.hypot(fx,fy);F=[fx/fl,fy/fl];L=[.894,.447];u=Math.min((bot-top)/8.6,W/24)*(1-.18*k)}
  u=Math.max(16,u);CAM.u=u;CAM.fx=F[0]*u;CAM.fy=F[1]*u;CAM.lx=L[0]*u;CAM.ly=L[1]*u;CAM.a=u*.82;
  const latH=3.6*Math.abs(CAM.ly),latW=3.6*CAM.lx,altH=ALTMAX*CAM.a;
- if(port){const tg=(typeof G!=='undefined'&&G&&G.bossOn&&G.boss&&G.boss.alive)?u*2.8:0;CAM.sh=(CAM.sh||0)+(tg-(CAM.sh||0))*.05;CAM.ox=W*.5-u*.5-CAM.sh;CAM.oy=clamp(top+(bot-top)*.68+CAM.sh*.8,top+altH+latH+u*.6,bot-latH-u*.4)}
- else{CAM.ox=Math.max(latW+u*1.2,W*.3);CAM.oy=clamp(bot-latH-u*.9,top+altH+latH+u*.4,bot-latH-u*.3)}}
+ if(port){const tg=bossLive?u*2.8:0;CAM.sh=(CAM.sh||0)+(tg-(CAM.sh||0))*.05;CAM.ox=W*.5-u*.5-CAM.sh;CAM.oy=clamp(top+(bot-top)*.68+CAM.sh*.8,top+altH+latH+u*.6,bot-latH-u*.4)}
+ else{CAM.ox=Math.max(latW+u*1.2,W*.3);CAM.oy=clamp(bot-latH-u*(.9-.45*(CAM.lb||0)),top+altH+latH+u*.4,bot-latH-u*.3)}}
 function P(x,y,z){const dz=z-CAM.z;return[CAM.ox+dz*CAM.fx+(x-4)*CAM.lx,CAM.oy+dz*CAM.fy+(x-4)*CAM.ly-y*CAM.a]}
 function poly(pts,fill,stroke,lw){ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();if(fill){ctx.fillStyle=fill;ctx.fill()}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=lw||1;ctx.stroke()}}
 function line3(a,b,col,lw){ctx.strokeStyle=col;ctx.lineWidth=lw;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}
@@ -747,6 +749,7 @@ function updateWalk(dt){const J=G.J;G.wt+=dt;
  if(J.dead>0){J.dead-=dt;if(J.dead<=0)walkRespawn();updateWalkFoes(dt);return}
  if(J.onP&&J.onP.dx)J.x+=J.onP.dx;
  ix=Math.abs(ix)<.18?0:Math.sign(ix)*Math.min(1,Math.abs(ix)*1.25);
+ if(strike)J.carryT=0;   // v9: tapping LAZORD stops a leftover flick run, so Jim doesn't slide into the foe after swinging
  if(J.carryT>0){J.carryT-=dt;if(ix&&Math.sign(ix)!==J.carryDir)J.carryT=0;else if(!ix&&!(typeof JOY!=='undefined'&&JOY.active))ix=J.carryDir*Math.min(1,J.carryT/.12+.15)}
  J.vx+=(ix*WK.run-J.vx)*Math.min(1,dt*(J.on?(G.st.ice?4.5:14):8));   // Frostpeak ice: slower grip on the ground
  if(ix)J.dir=ix>0?1:-1;
@@ -757,7 +760,8 @@ function updateWalk(dt){const J=G.J;G.wt+=dt;
  const py=J.y;J.py=py;J.y+=J.vy*dt;J.on=false;J.onP=null;
  for(const s of G.wS){if(J.x+WK.pw>s.x0&&J.x-WK.pw<s.x1&&J.y<s.y1&&J.y+WK.ph>s.y0){if(J.vy<=0&&py>=s.y1-.08){J.y=s.y1;J.vy=0;J.on=true}else if(J.vy>0){J.y=s.y0-WK.ph;J.vy=0}}}
  if(J.vy<=0)for(const p of G.wP){if(J.x+WK.pw*.6>p.x0&&J.x-WK.pw*.6<p.x1&&py>=p.y-.02&&J.y<=p.y){J.y=p.y;J.vy=0;J.on=true;if(p.mx)J.onP=p}}
- J.swCd-=dt;if(strike&&J.swCd<=0){J.sw=.3;J.swv=.45;J.swCd=.34;sfx('swing')}J.sw=Math.max(0,J.sw-dt);J.swv=Math.max(0,(J.swv||0)-dt);J.inv=Math.max(0,J.inv-dt);J.anim+=Math.abs(J.vx)*dt;
+ if(J.on)J.stE=null;   // v9: back on solid footing -> the next stomp on that foe counts again
+ J.swCd-=dt;if(strike&&J.swCd<=0){J.swN=(J.swN||0)+1;J.sw=.3;J.swv=.45;J.swCd=.34;sfx('swing')}J.sw=Math.max(0,J.sw-dt);J.swv=Math.max(0,(J.swv||0)-dt);J.inv=Math.max(0,J.inv-dt);J.anim+=Math.abs(J.vx)*dt;
  if(G.st.lava&&J.y<-1.1){walkDie('Too hot! Mind the lava!');return}
  if(J.y<-5){walkDie('Watch your step!');return}
  for(const c of G.wCK)if(!c.on&&J.x>c.x){c.on=true;J.ck=c;msg('Checkpoint!',1.2);sfx('fuel')}
@@ -779,24 +783,25 @@ function updateWalkFoes(dt){const J=G.J,alive=J.dead<=0,sb=J.sw>.05&&alive?swing
   else{if(e.hit<=0)e.x+=e.vx*dt;if(e.x<e.a){e.x=e.a;e.vx=Math.abs(e.vx)}if(e.x>e.b){e.x=e.b;e.vx=-Math.abs(e.vx)}
    if(e.k==='hopper'){e.hopT-=dt;if(e.jy<=0&&e.hopT<=0){e.jv=7.2;e.hopT=1+Math.random()*1}if(e.jv||e.jy>0){e.jy+=e.jv*dt;e.jv-=28*dt;if(e.jy<=0){e.jy=0;e.jv=0}}}}
   const ey0=e.k==='drone'?e.y-e.h/2:e.y+(e.jy||0),ey1=ey0+e.h;
-  if(sb&&e.hit<=(e.k==='drone'?0:.28)&&e.x+e.w>sb.x0&&e.x-e.w<sb.x1&&ey1>sb.y0&&ey0<sb.y1){e.hp--;e.hit=.32;wburst(e.x,(ey0+ey1)/2,6,'#bfe8ff',3);
+  if(sb&&e.hit<=(e.k==='drone'?0:.28)&&e.lastSw!==J.swN&&e.x+e.w>sb.x0&&e.x-e.w<sb.x1&&ey1>sb.y0&&ey0<sb.y1){e.hp--;e.hit=.32;e.lastSw=J.swN;wburst(e.x,(ey0+ey1)/2,6,'#bfe8ff',3);
    if(e.hp<=0){e.dead=true;wpop(PTS[e.k],e.x,ey1);wburst(e.x,(ey0+ey1)/2,18);sfx('boom')}else{sfx('ping');if(e.k!=='drone'){e.x=clamp(e.x+J.dir*(e.k==='lord'?1.8:e.k==='knight'?1.3:.9),e.a,e.b);e.hit=e.k==='lord'?.8:.6;if(e.k==='lord')e.wind=0}}continue}
   if(alive&&J.x+WK.pw>e.x-e.w&&J.x-WK.pw<e.x+e.w&&J.y+WK.ph>ey0&&J.y<ey1){
-   if(J.vy<-1&&(J.y>ey0+e.h*.45||(J.py!=null&&J.py>=ey1-.3))&&e.k!=='drone'){e.hp--;J.vy=9;if(e.hp<=0){e.dead=true;wpop(PTS[e.k],e.x,ey1);wburst(e.x,ey1,16);sfx('boom')}else{e.hit=.3;sfx('ping')}}
+   if(J.vy<-1&&(J.y>ey0+e.h*.45||(J.py!=null&&J.py>=ey1-.3))&&e.k!=='drone'){J.vy=9;if(J.stE===e)e.hit=Math.max(e.hit,.12);else{e.hp--;if(e.hp<=0){e.dead=true;wpop(PTS[e.k],e.x,ey1);wburst(e.x,ey1,16);sfx('boom')}else{e.hit=.3;J.stE=e;sfx('ping')}}}   // v9: the bounce re-landing on the same foe is a harmless bounce, not a 2nd stomp
    else if(e.k!=='drone'&&e.hit>0){J.inv=Math.max(J.inv,.5)}   // touching a foe you just hit (stunned) is safe, with a moment to step away
    else if(J.inv<=0){walkDie(e.k==='drone'?'Zapped by a drone!':WFOE[e.k]||'Bumped by a scrap bot!');return}}}
  for(const o of G.wO){if(o.g)o.vy-=o.g*dt;o.x+=o.vx*dt;o.y+=o.vy*dt;o.life-=dt;
   if(o.ref){let hitE=null;for(const e of G.wE){if(e.dead)continue;const ey0=e.k==='drone'?e.y-e.h/2:e.y+(e.jy||0);if(Math.abs(o.x-e.x)<e.w+.15&&o.y>ey0&&o.y<ey0+e.h){hitE=e;break}}
-   if(hitE){o.life=0;hitE.hp--;hitE.hit=.3;wburst(o.x,o.y,10,'#8ff4ff',3);if(hitE.hp<=0){hitE.dead=true;wpop(PTS[hitE.k]+200,hitE.x,hitE.y+hitE.h);wburst(hitE.x,hitE.y+hitE.h/2,18);sfx('boom')}else sfx('ping');continue}
+   if(hitE&&o.sw!=null&&hitE.lastSw===o.sw){o.life=0;wburst(o.x,o.y,8,'#8ff4ff',2);continue}   // v9: same swing already hit this foe with the blade
+   if(hitE){o.life=0;hitE.hp--;hitE.hit=.3;hitE.lastSw=o.sw;wburst(o.x,o.y,10,'#8ff4ff',3);if(hitE.hp<=0){hitE.dead=true;wpop(PTS[hitE.k]+200,hitE.x,hitE.y+hitE.h);wburst(hitE.x,hitE.y+hitE.h/2,18);sfx('boom')}else sfx('ping');continue}
    if(walkSolidHit(o.x,o.y,.05,.05))o.life=0;continue}
-  if(o.laser&&sb&&o.x>sb.x0-.15&&o.x<sb.x1+.15&&o.y>sb.y0&&o.y<sb.y1){o.ref=1;o.vx=-o.vx*1.25;o.vy=-o.vy*.6;o.life=2;wburst(o.x,o.y,8,'#8ff4ff',3);sfx('ping');wpop(PTS.orb,o.x,o.y);continue}
+  if(o.laser&&sb&&o.x>sb.x0-.15&&o.x<sb.x1+.15&&o.y>sb.y0&&o.y<sb.y1){o.ref=1;o.sw=J.swN;o.vx=-o.vx*1.25;o.vy=-o.vy*.6;o.life=2;wburst(o.x,o.y,8,'#8ff4ff',3);sfx('ping');wpop(PTS.orb,o.x,o.y);continue}
   if(sb&&o.x>sb.x0&&o.x<sb.x1&&o.y>sb.y0&&o.y<sb.y1){o.life=0;wpop(PTS.orb,o.x,o.y);wburst(o.x,o.y,8,o.fire?'#ffb040':'#ff9ae8',3);sfx('ping');continue}
   if(alive&&J.inv<=0&&Math.abs(o.x-J.x)<WK.pw+.12&&o.y>J.y&&o.y<J.y+WK.ph){o.life=0;walkDie(o.lord?'Zapped by Lord Bucketon!':o.laser?'Hit by a White Knight laser!':o.fire?'Hit by a fireball!':'Hit by a drone shot!');return}
   if(walkSolidHit(o.x,o.y,.05,.05))o.life=0}
  G.wO=G.wO.filter(o=>o.life>0)}
 function walkDie(why){const J=G.J;if(J.dead>0)return;J.carryT=0;J.dead=1.6;G.lives--;wburst(J.x,J.y+1,26,'#9fe0ff',5);wburst(J.x,J.y+1,14);sfx('die');G.shake=.8;G.hitFlash=1;msg(why,1.8)}
 function walkRespawn(){const J=G.J;if(G.lives<=0){state='over';save.hi=Math.max(save.hi||0,G.score);persist();sfx('over');musicFor(null);return}
- const c=J.ck;Object.assign(J,{x:c.x,y:c.y+.05,vx:0,vy:0,dir:1,on:false,onP:null,inv:2.2,sw:0,swv:0,carryT:0,dead:0});J.botTP=null;G.wO=[];
+ const c=J.ck;Object.assign(J,{x:c.x,y:c.y+.05,vx:0,vy:0,dir:1,on:false,onP:null,inv:2.2,sw:0,swv:0,carryT:0,dead:0,stE:null});J.botTP=null;G.wO=[];
  for(const e of G.wE)if(!e.dead&&Math.abs(e.x-c.x)<3){if(e.k==='drone')e.t+=3;else if(e.k==='flamer'||e.k==='knight'){e.fireT=Math.max(e.fireT,2.5);e.wind=0}else e.x=e.b}msg('Get ready!',1.2)}
 // test/demo bot: run right, jump gaps/walls/foes, swing at anything close
 function walkBot(){const J=G.J;let j=false,s=false;const ahead=J.x+.9;
