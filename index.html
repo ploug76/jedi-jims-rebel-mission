@@ -103,6 +103,10 @@ function update(dt){
  if(s.alive){
   let ix=INPUT.x,iy=INPUT.y,fire=INPUT.fire||AUTO;
   if(window.__BOT){const b=botInput();ix=b.x;iy=b.y;fire=true}
+  // AUTO assist: fires for you, and when you are not swiping (finger up for a moment) it flies Jim through the gaps and lines up targets.
+  // Any swipe or key press takes over instantly; the swipe controls themselves are unchanged.
+  else if(AUTO&&!ix&&!iy&&!(typeof JOY!=='undefined'&&JOY.active)){G.apT=(G.apT||0)+dt;if(G.apT>.35){const b=botInput();ix=b.x;iy=b.y;G.ap=1}}
+  else{G.apT=0;G.ap=0}
   const k=Math.min(1,dt*9);s.vx+=(ix*5.4-s.vx)*k;s.va+=(iy*4-s.va)*k;
   s.x=clamp(s.x+s.vx*dt,XMIN,XMAX);s.alt=clamp(s.alt+s.va*dt,ALTMIN,ALTMAX);if((s.x<=XMIN&&s.vx<0)||(s.x>=XMAX&&s.vx>0))s.vx=0;if((s.alt<=ALTMIN&&s.va<0)||(s.alt>=ALTMAX&&s.va>0))s.va=0;
   s.bank=lerp(s.bank,s.vx/5.4,Math.min(1,dt*8));s.inv=Math.max(0,s.inv-dt);
@@ -317,7 +321,11 @@ function drawWorld(){const t=G.t,s=G.ship;CAM.z=s.z;
 const SKEY='jjrm_save_v1';
 save=(()=>{try{const s=JSON.parse(localStorage.getItem(SKEY));if(s&&typeof s==='object')return Object.assign({hi:0,muted:false,auto:true},s)}catch(e){}return{hi:0,muted:false,auto:true}})();
 muted=!!save.muted;AUTO=save.auto!==false;
-function persist(){try{localStorage.setItem(SKEY,JSON.stringify(save))}catch(e){}}
+// hidden tester switch (same as Chef Kelly): ?qa=unlock[&level=N] starts at stage N (1-10) for this session only; nothing saved, no leaderboard posts.
+// The free-sample cap still applies in sample mode (add &sample=0 for the full game, exactly like Chef Kelly).
+const QA=/[?&]qa=unlock(&|$)/.test(location.search);if(QA)window.__QA=1;
+const QAL=QA?Math.max(0,Math.min(NST,parseInt(new URLSearchParams(location.search).get('level'),10)||0)):0;
+function persist(){if(window.__QA)return;try{localStorage.setItem(SKEY,JSON.stringify(save))}catch(e){}}
 let UIE=[],SAFE={l:0,t:0,r:0,b:0},TIME=0,howPage=0,BTNDOWN=null,prevState='title';
 const FONT='"Trebuchet MS","Segoe UI",system-ui,-apple-system,sans-serif';
 function reg(k,x,y,w,h){UIE.push({k,x,y,w,h})}
@@ -374,7 +382,7 @@ function logo(x,y,w,maxH){const h1=Math.min(maxH*.3,w*.12),h2=Math.min(maxH*.42,
  reg('txt:logo2',x-f.w/2,y+h1*1.25,f.w,f.sz*1.2);return h1*1.25+f.sz*1.3}
 // ---------- screens ----------
 function go(st){if(st==='how'&&state!=='how')prevState=state;state=st;BTNDOWN=null;if(typeof resetInput==='function')resetInput();if(st==='title')musicFor('title')}
-function startGame(){audioInit();newGame()}
+function startGame(){audioInit();newGame();if(QAL>1){startStage(QAL-1);G.story=0}}
 function toggleMute(){muted=!muted;save.muted=muted;persist();if(MASTER)MASTER.gain.value=muted?0:.8;if(!muted){audioInit();sfx('click')}}
 function toggleAuto(){AUTO=!AUTO;save.auto=AUTO;persist();sfx('click')}
 function titleBG(){if(!G||state==='title'){CAM.z=TIME*6}drawSky(TIME,6);}
@@ -396,7 +404,7 @@ function drawTitle(){const s=S();CAM.u=Math.min(W,H)/12;CAM.fx=.894*CAM.u;CAM.fy
   if(hi)txt('hi',hi,cx,y2+h2+20,17,'#ffe14a');credit(cx,rw)}}
 const HOW=[
  ['The quest','Jim is searching for the precious Light Ring!\nEvery stage you clear, flying or on foot, earns one glowing piece of the ring.\nCollect all 10 pieces. The last piece waits at the end of the Light Ring Vault.'],
- ['Fly the mission','SWIPE on the screen to steer Jim\'s starfighter: left and right slide across, up and down change your ALTITUDE (height). Lift your finger to stop.\nTap FIRE on the right to shoot. AUTO fires for you.\nKeys: arrows / WASD, Space or J to fire.'],
+ ['Fly the mission','SWIPE on the screen to steer Jim\'s starfighter: left and right slide across, up and down change your ALTITUDE (height). Lift your finger to stop.\nTap FIRE on the right to shoot. AUTO fires for you, and flies Jim through the gaps whenever you stop swiping.\nKeys: arrows / WASD, Space or J to fire.'],
  ['Walls and force fields','Fly over low brick walls, or through the gaps and windows.\nDodge the pink force fields by flying under or over them.\nA GREEN ring on the next wall means you will make it through. RED means move!\nGreen bands on the altimeter show the open heights.'],
  ['Fuel and targets','Fuel drains all the time. Shoot FUEL tanks to refill.\nYour lasers fly at your height, so get LOW to hit things on the ground.\nGun turrets shoot back. Radar dishes are worth 1,000. Missiles launch as you get close.'],
  ['Dogfights and robots','In open space, match a raider\'s height: a green box means it\'s lined up.\nAt the end of some fortresses a giant robot waits. Shoot its glowing core while it\'s open.\n⏸ pauses. Extra ship every 20,000 points.'],
@@ -588,16 +596,24 @@ function botInput(){const s=G.ship;let tx=s.x,ta=2.2;
    if(tgt){tx=tgt.x;ta=.5}
    if(w){const dz=w.z-s.z;if(!tgt||dz<7.5){let best=null,bc=1e9;for(let x=.6;x<=7.4;x+=.2)for(let a=.35;a<=4.9;a+=.15){if(wallHit(w,x,a,.36+.3,.17+.22))continue;const c=(x-s.x)**2*1.2+(a-s.alt)**2*1.6+(tgt?((x-tx)**2*.2+(a-ta)**2*.1):(a-2)**2*.05);if(c<bc){bc=c;best=[x,a]}}if(best){tx=best[0];ta=best[1]}}}}
   for(const o of G.objs){if(!o.alive)continue;const dz=o.z-s.z;if(o.k==='missile'){if(dz>-.6&&dz<4.5&&Math.abs(o.x-s.x)<1.1)tx=o.x+(o.x<4?1.8:-1.8);continue}
-   if(dz>-.6&&dz<3&&Math.abs(o.x-s.x)<o.w+.8)ta=Math.max(ta,o.h+.65)}}
+   const px=s.x+s.vx*Math.max(0,dz)/G.speed*.5;if(dz>-.6&&dz<4.6&&(Math.abs(o.x-s.x)<o.w+.8||Math.abs(o.x-px)<o.w+.8||Math.abs(o.x-tx)<o.w+.6))ta=Math.max(ta,(o.y||0)+o.h+.65)}}
  else{let best=null;for(const e of G.enemies){if(!e.alive)continue;const dz=e.z-s.z;if(dz<1.2||dz>24)continue;if(!best||dz<best.z-s.z)best=e}
   if(best){tx=best.x;ta=best.y;if(best.z-s.z<3.2)ta=best.y+(best.y<2.5?1.4:-1.4)}
   for(const e of G.enemies){if(!e.alive)continue;const dz=e.z-s.z;if(dz>-.5&&dz<2.6&&Math.abs(e.x-s.x)<1.1&&Math.abs(e.y-ta)<.9)ta=e.y+(e.y<2.5?1.4:-1.4)}}
- for(const q of G.shots){const close=-q.vz+(G.bossOn?0:G.speed),dz=q.z-s.z;if(dz<-.3||dz>6)continue;const t=Math.max(0,dz/close),px=q.x+q.vx*t,py=q.y+q.vy*t;
-  if(Math.abs(px-tx)<.85&&Math.abs(py-ta)<.75){const wl=G.st.k==='fort'&&G.walls.some(w=>!w.passed&&w.z-s.z<4&&w.z>s.z);if(wl)ta=py+(py<2.5?.9:-.9);else tx=px+(px<4?1.5:-1.5)}}
+ // dodge: predict where each incoming shot crosses Jim's depth; if the planned spot is in its path, pick the nearest spot clear of every shot (and of the next wall)
+ const TH=[];for(const q of G.shots){const close=-q.vz+(G.bossOn?0:G.speed),dz=q.z-s.z;if(dz<-.3||dz>9)continue;const t=Math.max(0,dz/close);TH.push([q.x+q.vx*t,q.y+q.vy*t])}
+ const hot=(x,a,mx,ma)=>TH.some(([px,py])=>Math.abs(px-x)<mx&&Math.abs(py-a)<ma);
+ if(TH.length&&(hot(tx,ta,.85,.75)||hot(s.x,s.alt,.6,.5))){const wn=G.st.k==='fort'?G.walls.find(w=>!w.passed&&w.z>s.z-.2&&w.z-s.z<5):null;let best=null,bc=1e9;
+  for(let x=.6;x<=7.4;x+=.3)for(let a=.4;a<=4.8;a+=.25){if(hot(x,a,1.05,.9))continue;if(wn&&wallHit(wn,x,a,.36+.3,.17+.22))continue;
+   if(G.st.k==='fort'&&G.objs.some(o=>o.alive&&o.z-s.z>-.6&&o.z-s.z<4.6&&Math.abs(o.x-x)<o.w+.8&&a<(o.y||0)+o.h+.6))continue;
+   const c=(x-s.x)**2+(a-s.alt)**2*1.3+((x-tx)**2+(a-ta)**2)*.15;if(c<bc){bc=c;best=[x,a]}}
+  if(best){tx=best[0];ta=best[1]}}
  tx=clamp(tx,XMIN,XMAX);ta=clamp(ta,ALTMIN,ALTMAX);return{x:clamp((tx-s.x)*2.4,-1,1),y:clamp((ta-s.alt)*2.6,-1,1)}}
 // ---------- main loop + test hooks ----------
 let last=performance.now();
-function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;TIME+=dt;keyInput();if(state==='play'||state==='intro'||state==='clear')update(dt);render();if(!window.__MANUAL)requestAnimationFrame(frame)}
+// fixed 1/60 s sub-steps: the game runs at the same real speed and with the same collision checks at 60 fps or on a slow 10 fps phone
+const LIVE=()=>state==='play'||state==='intro'||state==='clear';
+function frame(now){const dt=Math.min(.12,Math.max(0,(now-last)/1000));last=now;TIME+=dt;keyInput();let r=dt;while(r>1e-6&&LIVE()){const h=Math.min(1/60,r);update(h);r-=h}render();if(!window.__MANUAL)requestAnimationFrame(frame)}
 const __T=window.__T={silent:false,step(n){for(let i=0;i<n;i++){TIME+=1/60;keyInput();if(state==='play'||state==='intro'||state==='clear')update(1/60)}render()},start(i){if(!G)newGame();startStage(i||0);render()},get G(){return G},get state(){return state},set state(v){state=v},go,
  layout(){render();const s=S();return{els:UIE.slice(),SAFE:{l:s.l,t:s.t,r:s.r,b:s.b}}},setHow(k){howPage=k;state='how';render()},newGame(){newGame();render()}};
 musicFor('title');requestAnimationFrame(frame);
@@ -1014,4 +1030,4 @@ async function postNow(){if(!G)return;const F=x=>x==null?()=>undefined:typeof x=
   return show()}
 const api={init,postNow,syncBest,localBest,gameOver,submitQuiet,watch,show,close,isOpen:()=>open,get backend(){return REMOTE?REMOTE.name:'local'},_t:{cleanName,nameError,fmt,boardId,pid,keyOf}};
 window.PALB=api})();
-</script><script>PALB.init({"game": "jedi-jims-rebel-mission", "title": "Jedi Jim's Rebel Mission", "order": "desc", "unit": "pts", "min": 0, "max": 100000000, "boards": null, "watch": [{"when": "state==='over'&&!!G", "score": "G.score"}]})</script><!--/lb--></body></html>
+</script><script>PALB.init({"game": "jedi-jims-rebel-mission", "title": "Jedi Jim's Rebel Mission", "order": "desc", "unit": "pts", "min": 0, "max": 100000000, "boards": null, "watch": [{"when": "state==='over'&&!!G&&!window.__QA", "score": "G.score"}]})</script><!--/lb--></body></html>
