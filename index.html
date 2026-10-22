@@ -22,14 +22,14 @@ const LANE=8,ALTMAX=5,ALTMIN=.25,XMIN=.45,XMAX=7.55;
 const STAGES=[
  {n:'Hangar Run',k:'walk',wi:0,wd:0,seed:2,len:95,sub:'On foot! Jump the gaps and swing your Lazord at the scrap bots.'},
  {n:'Outer Wall',k:'fort',seed:0,len:230,dens:0,boss:0,sub:'Fly into the fortress. Get low to shoot the fuel tanks!'},
- {n:'Dune Scrapyard',k:'walk',wi:3,wd:.6,seed:101,len:105,sub:'Hot sand and hopping sand crabs! Stomp them or swing your Lazord.'},
+ {n:'Dune Scrapyard',k:'walk',kn:3,wi:3,wd:.6,seed:101,len:105,sub:'Hot sand and hopping sand crabs! Stomp them or swing your Lazord.'},
  {n:'Asteroid Reach',k:'space',seed:1,kills:12,dens:.5,sub:'Raiders incoming! Match their height to hit them.'},
- {n:'Crystal Caverns',k:'walk',wi:1,wd:1,seed:5,len:115,sub:'Leap across the cavern ledges. Your Lazord knocks back drone shots!'},
+ {n:'Crystal Caverns',k:'walk',kn:4,wi:1,wd:1,seed:5,len:115,sub:'Leap across the cavern ledges. Your Lazord knocks back drone shots!'},
  {n:'Ion Citadel',k:'fort',seed:3,len:250,dens:1,boss:1,sub:'Force fields ahead, and the Warden robot guards the end.'},
- {n:'Frostpeak Outpost',k:'walk',wi:4,wd:1.4,seed:102,len:125,ice:1,sub:'Slippery ice! Snowball bots roll in fast. Jump them or swing early.'},
- {n:'Magma Foundry',k:'walk',wi:5,wd:1.7,seed:103,len:130,lava:1,sub:'Ride the moving platforms over the lava. Swat the fireballs!'},
- {n:'Iron Stronghold',k:'fort',seed:8,len:300,dens:2.5,boss:2,sub:'The Overlord robot waits at the end. Hit its glowing core!'},
- {n:'Light Ring Vault',k:'walk',wi:2,wd:2,seed:9,len:135,fin:1,sub:'The Light Ring is hidden at the end of the vault. Go get it, Jim!'},
+ {n:'Frostpeak Outpost',k:'walk',early:'roller',kn:4,wi:4,wd:1.4,seed:102,len:125,ice:1,sub:'Slippery ice! Snowball bots roll in fast. Jump them or swing early.'},
+ {n:'Magma Foundry',k:'walk',early:'knight',kn:4,wi:5,wd:1.7,seed:103,len:130,lava:1,sub:'Ride the moving platforms over the lava. Swat the fireballs!'},
+ {n:'Iron Stronghold',k:'fort',seed:8,len:300,dens:2.5,boss:2,sub:'Lord Bucketon waits at the end on his hover pod. Shoot him when he lifts his visor!'},
+ {n:'Light Ring Vault',k:'walk',kn:6,knSquad:1,lord:1,wi:2,wd:2,seed:9,len:135,fin:1,sub:'Lord Bucketon guards the Light Ring! Swing your Lazord to bounce his lasers back at him.'},
 ];
 // flying stages from v5 that are no longer in the run (kept for later, not used)
 const SPARE_STAGES=[
@@ -39,7 +39,7 @@ const SPARE_STAGES=[
 ];
 const RINGN=STAGES.length;
 const NST=STAGES.length;
-const PTS={crystal:50,bot:300,brute:600,drone:500,hopper:300,roller:400,flamer:500,orb:100,fuel:300,turret:200,radar:1000,silo:150,missile:300,raider:500,ace:800,boss:5000};
+const PTS={crystal:50,bot:300,brute:600,drone:500,hopper:300,roller:400,flamer:500,knight:400,lord:3000,orb:100,fuel:300,turret:200,radar:1000,silo:150,missile:300,raider:500,ace:800,boss:5000};
 function rng(s){return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 const clamp=(v,a,b)=>v<a?a:v>b?b:v,lerp=(a,b,t)=>a+(b-a)*t;
 function stageOf(si){return STAGES[si%NST]}
@@ -120,7 +120,7 @@ function update(dt){
   s.x=clamp(s.x+s.vx*dt,XMIN,XMAX);s.alt=clamp(s.alt+s.va*dt,ALTMIN,ALTMAX);if((s.x<=XMIN&&s.vx<0)||(s.x>=XMAX&&s.vx>0))s.vx=0;if((s.alt<=ALTMIN&&s.va<0)||(s.alt>=ALTMAX&&s.va>0))s.va=0;
   s.bank=lerp(s.bank,s.vx/5.4,Math.min(1,dt*8));s.inv=Math.max(0,s.inv-dt);
   const z0=s.z;
-  if(G.boss&&G.boss.alive&&s.z>=G.bossZ-12){s.z=G.bossZ-12;if(!G.bossOn){G.bossOn=true;msg(G.boss.kind===1?'The Warden! Hit its core when it glows!':'The Overlord! Aim for the glowing core!',2.8);musicFor('boss')}}
+  if(G.boss&&G.boss.alive&&s.z>=G.bossZ-12){s.z=G.bossZ-12;if(!G.bossOn){G.bossOn=true;msg(G.boss.kind===1?'The Warden! Hit its core when it glows!':'Lord Bucketon! Shoot when his visor lifts!',2.8);musicFor('boss')}}
   else s.z+=G.speed*dt;
   G.fireT-=dt;if(fire&&G.fireT<=0){G.fireT=.17;G.bolts.push({x:s.x,y:s.alt,z:s.z+.9,life:.75});sfx('laser')}
   if(!G.bossOn){G.fuel-=dt*(fort?2.7+G.loop*.25:1.1);if(G.fuel<25){G.lowT-=dt;if(G.lowT<=0){G.lowT=1;sfx('low');if(G.fuel>0)msg('Fuel low! Shoot fuel tanks!',1.2)}}}
@@ -191,9 +191,9 @@ function updateBoss(dt){const B=G.boss,s=G.ship;B.flash=Math.max(0,B.flash-dt);
  const sp=B.kind===1?.55:.8;B.x=4+Math.sin(B.t*sp)*2.3;
  const cyc=B.kind===1?4.2:3.6,ph=B.t%cyc;B.open=ph<1.9?(1.9-ph):0;
  B.fireT-=dt;if(B.fireT<=0&&s.alive){const hard=B.kind===2||G.loop>0;B.fireT=Math.max(1.1,(B.kind===1?2:1.6)-G.loop*.15);
-  const side=Math.random()<.5?-1:1;aimShot(B.x+side*1.65*BSC,3.3*BSC,B.z-1.1,6.5,'plasma');
+  const side=Math.random()<.5?-1:1;if(B.kind===2)aimShot(B.x+.9*BSC,2.1*BSC,B.z-1.1,6.5,'redlaser');else aimShot(B.x+side*1.65*BSC,3.3*BSC,B.z-1.1,6.5,'plasma');
   if(hard&&Math.random()<.5){const q=G.shots[G.shots.length-1];G.shots.push(Object.assign({},q,{vx:q.vx+1.1}),Object.assign({},q,{vx:q.vx-1.1}))}sfx('plasma')}}
-function killBoss(){const B=G.boss;B.alive=false;B.dieT=2.2;addScore(PTS.boss*(B.kind)+G.loop*2000,B.x,4,B.z);boom(B.x,2.5,B.z,60);sfx('bigboom');G.shake=1.5;G.bossOn=false;G.shots=[];msg('Robot destroyed!',2.4);musicFor('fort')}
+function killBoss(){const B=G.boss;B.alive=false;B.dieT=2.2;addScore(PTS.boss*(B.kind)+G.loop*2000,B.x,4,B.z);boom(B.x,2.5,B.z,60);sfx('bigboom');G.shake=1.5;G.bossOn=false;G.shots=[];msg(B.kind===2?'Lord Bucketon flees! On to the vault!':'Robot destroyed!',2.4);musicFor('fort')}
 
 // ===== world rendering (isometric projection) =====
 const CAM={ox:0,oy:0,fx:0,fy:0,lx:0,ly:0,a:0,u:30,z:0,port:false};
@@ -284,7 +284,7 @@ function wallReticle(w,t){const s=G.ship;if(!s.alive)return;const dz=w.z-s.z;if(
  ctx.strokeStyle=bad?'#ff4040':'#4dff7a';ctx.lineWidth=2.5;ctx.globalAlpha=.5+.5*Math.abs(Math.sin(t*6));ctx.beginPath();ctx.ellipse(p[0],p[1],r,r*.55,0,0,6.283);ctx.stroke();
  ctx.beginPath();ctx.moveTo(p[0]-r*1.4,p[1]);ctx.lineTo(p[0]-r*.6,p[1]);ctx.moveTo(p[0]+r*.6,p[1]);ctx.lineTo(p[0]+r*1.4,p[1]);ctx.stroke();ctx.globalAlpha=1}
 const BSC=1.25,CORE_Y=2.6*BSC;
-function drawBoss(B,t){if(!B.alive&&B.dieT<=0)return;const X=B.x,z=B.z,k=B.kind,q=BSC;if(!B.alive)ctx.globalAlpha=clamp(B.dieT/2.2,0,1);
+function drawBoss(B,t){if(!B.alive&&B.dieT<=0)return;if(B.kind===2){drawBucketonBoss(B,t);return}const X=B.x,z=B.z,k=B.kind,q=BSC;if(!B.alive)ctx.globalAlpha=clamp(B.dieT/2.2,0,1);
  const x=X;const bx=(a,b,y0,y1,z0,z1,c1,c2,c3)=>box(X+a*q,X+b*q,y0*q,y1*q,z+z0,z+z1,c1,c2,c3,1);
  const body=k===1?['#6c7488','#545b6d','#8c95ab']:['#7a3b3b','#5c2a2a','#a85252'];const st=Math.sin(B.t*3)*.15;
  shadow(x,z,2.3,.4);
@@ -303,6 +303,43 @@ function drawBoss(B,t){if(!B.alive&&B.dieT<=0)return;const X=B.x,z=B.z,k=B.kind,
  // aim helper: green ring on the core when you're lined up
  const s=G.ship;if(B.alive&&s.alive&&Math.abs(s.x-X)<.6&&Math.abs(s.alt-CORE_Y)<.5){ctx.strokeStyle='#4dff7a';ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(c[0],c[1],CAM.u*.85,0,6.283);ctx.stroke()}
  ctx.globalAlpha=1}
+// ---- Lord Bucketon (original villain): a tiny man in a huge glossy bucket-dome helmet on a hover pod ----
+function drawBucketonBoss(B,t){const X=B.x,z=B.z,q=BSC;if(!B.alive)ctx.globalAlpha=clamp(B.dieT/2.2,0,1);shadow(X,z,1.9,.4);
+ const o=P(X,0,z-.5),A=CAM.a*q,open=B.open>0;
+ // hover pod
+ const py=o[1]-A*.6;ctx.fillStyle='#2a2238';ctx.beginPath();ctx.ellipse(o[0],py,A*1.6,A*.5,0,0,6.283);ctx.fill();ctx.fillStyle='#4a3a66';ctx.beginPath();ctx.ellipse(o[0],py-A*.16,A*1.55,A*.38,0,0,6.283);ctx.fill();
+ for(let i=-2;i<=2;i++)circ(o[0]+i*A*.55,py+A*.05,A*.09,Math.floor(t*6+i)%2?'#ff5a5a':'#ffd23a');
+ ctx.save();ctx.shadowColor='#b07aff';ctx.shadowBlur=A*.6;ctx.fillStyle='rgba(176,122,255,.55)';ctx.beginPath();ctx.ellipse(o[0],o[1]-A*.12,A*.8,A*.12,0,0,6.283);ctx.fill();ctx.restore();
+ drawBucketon(o[0],py-A*.4,A*1.3,1,t,open,B.flash>0,B.fireT<.45,B.t);
+ const s=G.ship,c=P(X,CORE_Y,z-.52);if(B.alive&&s.alive&&Math.abs(s.x-X)<.6&&Math.abs(s.alt-CORE_Y)<.5){ctx.strokeStyle='#4dff7a';ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(c[0],c[1],CAM.u*.85,0,6.283);ctx.stroke()}
+ ctx.globalAlpha=1}
+// Lord Bucketon himself, drawn standing at (x,y)=feet, A = pixels per unit, d = facing. Short body, giant rounded bucket-dome helmet with one red eye-slit
+// and two antenna nubs, purple-and-black cape with a jagged-gear emblem, studded gloves, stubby laser pistol. open = visor lifted (taunt / weak spot).
+function drawBucketon(x,y,A,d,t,open,flash,aim,bt){ctx.save();ctx.translate(x,y);ctx.scale(d,1);const bob=Math.sin(bt*6)*A*.04,wob=Math.sin(bt*5.3)*.07;
+ const rr3=(x0,y0,w,h,r,c)=>{ctx.fillStyle=c;ctx.beginPath();ctx.moveTo(x0+r,y0);ctx.arcTo(x0+w,y0,x0+w,y0+h,r);ctx.arcTo(x0+w,y0+h,x0,y0+h,r);ctx.arcTo(x0,y0+h,x0,y0,r);ctx.arcTo(x0,y0,x0+w,y0,r);ctx.fill()};
+ // boots + tiny legs
+ rr3(-A*.26,-A*.32,A*.18,A*.32,A*.05,'#15131c');rr3(A*.08,-A*.32,A*.18,A*.32,A*.05,'#15131c');rr3(-A*.32,-A*.08,A*.26,A*.1,A*.04,'#000');rr3(A*.06,-A*.08,A*.26,A*.1,A*.04,'#000');
+ // cape (purple lining + black outside) and tiny body
+ ctx.fillStyle='#4a1f73';ctx.beginPath();ctx.moveTo(-A*.42,-A*.25);ctx.lineTo(A*.42,-A*.25);ctx.lineTo(A*.3,-A*.95);ctx.lineTo(-A*.3,-A*.95);ctx.fill();
+ ctx.fillStyle='#17121f';ctx.beginPath();ctx.moveTo(-A*.5,-A*.2);ctx.lineTo(-A*.18,-A*.22);ctx.lineTo(-A*.2,-A*.95);ctx.lineTo(-A*.34,-A*.95);ctx.fill();
+ rr3(-A*.22,-A*.92,A*.44,A*.66,A*.08,'#221a2c');
+ // jagged-gear emblem
+ {const ex=0,ey=-A*.6,r=A*.11;ctx.fillStyle='#ffcf3a';ctx.beginPath();for(let i=0;i<16;i++){const a=i*Math.PI/8,rad=i%2?r*.62:r;ctx.lineTo(ex+Math.cos(a)*rad,ey+Math.sin(a)*rad)}ctx.fill();circ(ex,ey,r*.32,'#221a2c')}
+ // arm + studded glove + stubby laser pistol pointing forward
+ rr3(A*.12,-A*.82,A*.42,A*.13,A*.06,'#17121f');rr3(A*.48,-A*.86,A*.16,A*.2,A*.06,'#0c0a10');for(let i=0;i<3;i++)circ(A*(.5+i*.05),-A*.84,A*.018,'#d8dde8');
+ rr3(A*.56,-A*.92,A*.34,A*.12,A*.04,'#2c2f3a');rr3(A*.6,-A*.82,A*.08,A*.14,A*.02,'#2c2f3a');ctx.save();if(aim){ctx.shadowColor='#ff2a40';ctx.shadowBlur=A*.4}circ(A*.92,-A*.86,A*(aim?.07:.045),aim?'#ffd6dc':'#ff2a40');ctx.restore();
+ // giant glossy bucket-dome helmet (wobbles)
+ ctx.save();ctx.translate(0,-A*.88+bob);ctx.rotate(wob);const hw=A*.62,hh=A*1.45;
+ ctx.fillStyle=flash?'#fff':'#0b0b12';ctx.beginPath();ctx.moveTo(-hw,0);ctx.lineTo(-hw,-hh*.55);ctx.bezierCurveTo(-hw,-hh*1.05,hw,-hh*1.05,hw,-hh*.55);ctx.lineTo(hw,0);ctx.closePath();ctx.fill();
+ ctx.fillStyle='#1d1c2a';ctx.fillRect(-hw,-A*.1,hw*2,A*.1);  // rim
+ ctx.fillStyle='rgba(255,255,255,.22)';ctx.beginPath();ctx.ellipse(-hw*.45,-hh*.7,hw*.16,hh*.22,-.25,0,6.283);ctx.fill();ctx.fillStyle='rgba(255,255,255,.5)';ctx.beginPath();ctx.ellipse(-hw*.5,-hh*.78,hw*.06,hh*.08,-.25,0,6.283);ctx.fill();
+ for(const sx of[-1,1]){rr3(sx*hw*.42-A*.05,-hh*.98,A*.1,A*.16,A*.04,'#2a2838');circ(sx*hw*.42,-hh*.99,A*.05,'#ff4a5a')}  // antenna nubs
+ if(open){// visor lifted: a tiny grumpy face peeks out (weak spot)
+  ctx.fillStyle='#e9b48f';ctx.fillRect(-hw*.62,-A*.62,hw*1.24,A*.48);ctx.fillStyle='#2a1a10';ctx.fillRect(-hw*.42,-A*.52,hw*.26,A*.06);ctx.fillRect(hw*.16,-A*.52,hw*.26,A*.06);
+  circ(-hw*.28,-A*.42,A*.04,'#000');circ(hw*.28,-A*.42,A*.04,'#000');ctx.fillStyle='#7a2a2a';ctx.fillRect(-hw*.18,-A*.27,hw*.36,A*.05);
+  ctx.fillStyle='#0b0b12';ctx.fillRect(-hw*.7,-A*1.02,hw*1.4,A*.32);ctx.save();ctx.shadowColor='#ff2a40';ctx.shadowBlur=A*.3;ctx.fillStyle='#ff3a50';ctx.fillRect(-hw*.55,-A*.92,hw*1.1,A*.07);ctx.restore()}
+ else{ctx.save();ctx.shadowColor='#ff2a40';ctx.shadowBlur=A*.35;ctx.fillStyle='#ff3a50';ctx.fillRect(-hw*.62,-A*.5,hw*1.24,A*.1);ctx.restore()}  // single red eye-slit
+ ctx.restore();ctx.restore()}
 function drawWorld(){const t=G.t,s=G.ship;CAM.z=s.z;
  const sh=G.shake>0?G.shake*CAM.u*.12:0;ctx.save();if(sh)ctx.translate((Math.random()-.5)*sh,(Math.random()-.5)*sh);
  drawSky(t,G.bossOn?0:G.speed);drawFloor();
@@ -320,7 +357,7 @@ function drawWorld(){const t=G.t,s=G.ship;CAM.z=s.z;
  if(G.boss)L.push({z:G.boss.z,x:G.boss.x,d:()=>drawBoss(G.boss,t)});
  if(s.alive)L.push({z:s.z,x:s.x,d:()=>drawShip(s.x,s.alt,s.z,s.bank,t,s.inv>0)});
  for(const b of G.bolts)L.push({z:b.z,x:b.x,d:()=>{const a=P(b.x,b.y,b.z-.5),c=P(b.x,b.y,b.z+.6);line3(a,c,'rgba(80,170,255,.45)',Math.max(4,CAM.u*.22));line3(a,c,'#e8f6ff',Math.max(1.5,CAM.u*.07))}});
- for(const q of G.shots)L.push({z:q.z,x:q.x,d:()=>{const p=P(q.x,q.y,q.z);if(q.k==='plasma'){circ(p[0],p[1],CAM.u*.32,'rgba(255,80,210,.4)');circ(p[0],p[1],CAM.u*.18,'#ffd0f4')}else if(q.k==='bolt'){circ(p[0],p[1],CAM.u*.2,'rgba(255,120,40,.5)');circ(p[0],p[1],CAM.u*.1,'#ffe0a0')}else{circ(p[0],p[1],CAM.u*.2,'rgba(255,230,80,.45)');circ(p[0],p[1],CAM.u*.11,'#fff3b0')}}});
+ for(const q of G.shots)L.push({z:q.z,x:q.x,d:()=>{const p=P(q.x,q.y,q.z);if(q.k==='plasma'){circ(p[0],p[1],CAM.u*.32,'rgba(255,80,210,.4)');circ(p[0],p[1],CAM.u*.18,'#ffd0f4')}else if(q.k==='redlaser'){circ(p[0],p[1],CAM.u*.3,'rgba(255,40,60,.45)');circ(p[0],p[1],CAM.u*.15,'#ffd6dc')}else if(q.k==='bolt'){circ(p[0],p[1],CAM.u*.2,'rgba(255,120,40,.5)');circ(p[0],p[1],CAM.u*.1,'#ffe0a0')}else{circ(p[0],p[1],CAM.u*.2,'rgba(255,230,80,.45)');circ(p[0],p[1],CAM.u*.11,'#fff3b0')}}});
  L.sort((a,b)=>b.z-a.z||a.x-b.x);for(const it of L)it.d();
  for(const p of G.parts){const q=P(p.x,p.y,p.z);ctx.globalAlpha=clamp(p.life*1.5,0,1);ctx.fillStyle=p.c;const r=Math.max(1.5,CAM.u*.09);ctx.fillRect(q[0]-r,q[1]-r,r*2,r*2)}ctx.globalAlpha=1;
  for(const p of G.pops){const q=P(p.x,p.y,p.z);ctx.globalAlpha=clamp(p.t*2,0,1);txt(null,String(p.n),q[0],q[1]-(1-p.t)*30,Math.max(17,CAM.u*.42),'#ffe14a',null,null,{oc:'#3a1a00'})}ctx.globalAlpha=1;
@@ -416,8 +453,9 @@ const HOW=[
  ['Fly the mission','SWIPE on the screen to steer Jim\'s starfighter: left and right slide across, up and down change your ALTITUDE (height). Lift your finger to stop.\nTap FIRE on the right to shoot. AUTO fires for you, and flies Jim through the gaps whenever you stop swiping.\nKeys: arrows / WASD, Space or J to fire.'],
  ['Walls and force fields','Fly over low brick walls, or through the gaps and windows.\nDodge the pink force fields by flying under or over them.\nA GREEN ring on the next wall means you will make it through. RED means move!\nGreen bands on the altimeter show the open heights.'],
  ['Fuel and targets','Fuel drains all the time. Shoot FUEL tanks to refill.\nYour lasers fly at your height, so get LOW to hit things on the ground.\nGun turrets shoot back. Radar dishes are worth 1,000. Missiles launch as you get close.'],
- ['Dogfights and robots','In open space, match a raider\'s height: a green box means it\'s lined up.\nAt the end of some fortresses a giant robot waits. Shoot its glowing core while it\'s open.\n⏸ pauses. Extra ship every 20,000 points.'],
- ['On foot','Stages 1, 3, 5, 7, 8 and 10 are on foot!\nSWIPE left or right to run. Tap JUMP to leap gaps and ledges. Tap LAZORD to swing his glowing Lazord at scrap bots and drones. It even knocks drone shots away!\nGrab crystals for points. Reach the pedestal to win the ring piece.\nKeys: arrows / A D to run, Up / W / Space to jump, J / K to swing the Lazord.']];
+ ['Dogfights and robots','In open space, match a raider\'s height: a green box means it\'s lined up.\nAt the end of some fortresses a boss waits: the Warden robot (shoot its glowing core while it\'s open) and the villain Lord Bucketon (shoot him when he lifts his visor).\n⏸ pauses. Extra ship every 20,000 points.'],
+ ['On foot','Stages 1, 3, 5, 7, 8 and 10 are on foot!\nSWIPE left or right to run. Tap JUMP to leap gaps and ledges. Tap LAZORD to swing his glowing Lazord at scrap bots and drones. It even knocks drone shots away!\nGrab crystals for points. Reach the pedestal to win the ring piece.\nKeys: arrows / A D to run, Up / W / Space to jump, J / K to swing the Lazord.'],
+ ['White Knights','White Knights are smooth white robots with laser guns. Watch for the glow: their gun lights up right before they shoot!\nWhite Knights: swing your LAZORD to bounce their lasers back at them.\nSwing or stomp on them to knock them out. Blue-sash Knights take two hits.']];
 function drawHow(){const s=S();drawSky(TIME,2);const pw=Math.min(s.w-24,560),ph=Math.min(s.h-24,560),x=s.l+(s.w-pw)/2,y=s.t+(s.h-ph)/2;
  ctx.fillStyle='rgba(10,16,48,.92)';rr(x,y,pw,ph,18);ctx.fill();ctx.strokeStyle='#8fd0ff';ctx.lineWidth=3;ctx.stroke();
  const [t,b]=HOW[howPage];const ts=Math.min(28,ph*.08);txt('howT',t,x+pw/2,y+ts*1.1,ts,'#ffe14a',null,pw-30);
@@ -463,13 +501,14 @@ const lowF=G.fuel<25&&Math.floor(TIME*4)%2;ctx.fillStyle='rgba(0,0,0,.55)';rr(fx
  // pause + mute
  iconBtn('pause',o.pause,'⏸',()=>go('pause'));iconBtn('mute',o.mute,muted?'🔇':'🔊',toggleMute);
  // boss bar
- if(G.boss&&G.bossOn&&G.boss.alive){const bw=Math.min(260,o.s.w*.5),bx=o.s.l+(o.s.w-bw)/2,by=o.top+4;ctx.fillStyle='rgba(0,0,0,.6)';rr(bx,by,bw,12,6);ctx.fill();ctx.fillStyle='#ff5ad8';rr(bx+2,by+2,(bw-4)*G.boss.hp/G.boss.max,8,4);ctx.fill();txt(null,G.boss.kind===1?'WARDEN':'OVERLORD',bx+bw/2,by+27,16,'#ffd0f4')}
+ if(G.boss&&G.bossOn&&G.boss.alive){const bw=Math.min(260,o.s.w*.5),bx=o.s.l+(o.s.w-bw)/2,by=o.top+4;ctx.fillStyle='rgba(0,0,0,.6)';rr(bx,by,bw,12,6);ctx.fill();ctx.fillStyle='#ff5ad8';rr(bx+2,by+2,(bw-4)*G.boss.hp/G.boss.max,8,4);ctx.fill();txt(null,G.boss.kind===1?'WARDEN':'LORD BUCKETON',bx+bw/2,by+27,16,'#ffd0f4')}
  // space kill counter
  if(G.st.k==='space'){txt(null,'Raiders '+Math.min(G.kills,G.need)+' / '+G.need,o.s.l+o.s.w/2,o.top+12,17,'#ffd0a0')}
  // swipe feedback (anchor ring + direction) and first-time hint
  if(JOY.active){ctx.globalAlpha=.55;ctx.strokeStyle='#8fd0ff';ctx.lineWidth=3;ctx.beginPath();ctx.arc(JOY.sx,JOY.sy,26,0,6.283);ctx.stroke();if(Math.hypot(JOY.dx,JOY.dy)>.2){const ex=JOY.sx+JOY.dx*44,ey=JOY.sy+JOY.dy*44;ctx.beginPath();ctx.moveTo(JOY.sx,JOY.sy);ctx.lineTo(ex,ey);ctx.stroke();circ(ex,ey,9,'#8fd0ff')}ctx.globalAlpha=1}
  else if(!window.__CAP&&(!SWIPED||G.t<4)){const HL=walk?['👆 Swipe ◀ ▶','to run']:['👆 Swipe to steer','▲ up / ▼ down = height'],HS=20;ctx.font=font(HS);const need=Math.max(...HL.map(l=>ctx.measureText(l).width))+8;
-  const a0=o.s.l+8,a1=o.b2[0]-o.b2[2]-8;let hx,hy;if(a1-a0>=need){hx=a0+(a1-a0)/2;hy=o.b1[1]-12}else{hx=o.s.l+o.s.w/2;hy=o.ctrlTop-HS*2.2}
+  const a0=o.s.l+8,a1=o.b2[0]-o.b2[2]-8;let hx,hy;if(walk&&o.s.w>o.s.h){hx=o.s.l+o.s.w*.45;hy=o.top+Math.max(64,(o.bot-o.top)*.3)}   // landscape on foot: up in the sky, clear of Jim and the ground
+  else if(a1-a0>=need){hx=a0+(a1-a0)/2;hy=o.b1[1]-12}else{hx=o.s.l+o.s.w/2;hy=o.ctrlTop-HS*2.2}
   ctx.globalAlpha=.9;HL.forEach((l,i)=>txt(null,l,hx,hy+i*(HS+5),HS,'#fff',null,o.s.w-16,{oc:'rgba(0,0,0,.8)'}));ctx.globalAlpha=1}
  const rb=(c,id,label,col,down)=>{const [x,y,r]=c;circ(x,y+3,r,'rgba(0,0,0,.35)');circ(x,y+(down?3:0),r,col);ctx.strokeStyle='#cfe8ff';ctx.lineWidth=3;ctx.beginPath();ctx.arc(x,y+(down?3:0),r,0,6.283);ctx.stroke();txt(null,label,x,y+(down?3:0),Math.max(17,Math.min(22,r*.4)),'#fff',null,Math.max(r*1.9,92));reg('btn:'+id,x-r,y-r,r*2,r*2+3)};
  if(window.__CAP){}   // cover capture only: hide the on-screen buttons
@@ -643,7 +682,7 @@ const WTHEME=[
  {top:'#f6cf8a',face:'#a8743a',deep:'#4a2c14',line:'rgba(255,230,180,.10)',far:'#5a3018',plat:'#c99a5a',name:'dunes',tint:['rgba(255,140,60,0)','rgba(255,140,60,.28)']},
  {top:'#f2fbff',face:'#6f8fb8',deep:'#22344f',line:'rgba(220,240,255,.14)',far:'#2c4470',plat:'#a8c8ec',name:'frost',tint:['rgba(150,200,255,0)','rgba(150,200,255,.22)']},
  {top:'#ff9a3a',face:'#4a3a3a',deep:'#1e1416',line:'rgba(255,160,90,.10)',far:'#2e1a1c',plat:'#8a6a5a',name:'foundry',tint:['rgba(255,70,20,0)','rgba(255,70,20,.30)']}];
-const WFOE={bot:'Bumped by a scrap bot!',brute:'Bumped by a scrap bot!',hopper:'Pinched by a sand crab!',roller:'Flattened by a snowball bot!',flamer:'Scorched by a flame turret!'};
+const WFOE={lord:'Bonked by Lord Bucketon!',knight:'Bumped by a White Knight!',bot:'Bumped by a scrap bot!',brute:'Bumped by a scrap bot!',hopper:'Pinched by a sand crab!',roller:'Flattened by a snowball bot!',flamer:'Scorched by a flame turret!'};
 function genWalk(st,si){
  const R=rng(seedOf(st,si)*104729+7),loop=G.loop,d=(st.wd!=null?st.wd:st.wi)+loop*1.2,TH=WTHEME[st.wi%WTHEME.length].name;
  const S=[],PL=[],E=[],C=[],CK=[];
@@ -652,9 +691,10 @@ function genWalk(st,si){
  let x=11,h=0,lastCk=1.5,n=0;const end=st.len;
  while(x<end){n++;const r=R();let gap=0,plat=false;const ph=h;
   if(r<.36)gap=1.5+R()*(1.1+Math.min(.7,d*.25));
-  else if(r<(TH==='foundry'?.64:.52)&&n>2)gap=4.6+R()*.7,plat=true;
+  else if(r<(TH==='foundry'?.64:.52)&&n>(st.wi>=3?5:2))gap=4.6+R()*.7,plat=true;
   if(R()<.42)h=clamp(h+(R()<.55?1:-1),0,3);
   if(gap>0&&!plat&&h>ph)gap=Math.min(gap,2.3);
+  if(st.wi>=3&&n<=5&&gap>0&&!plat){gap=Math.min(gap,1.6);if(h>ph)h=ph}   // new worlds: the first pits are short and level, easy for touch players
   if(plat){const py=Math.max(ph,h)+1.5,P={x0:x+gap/2-1.15,x1:x+gap/2+1.15,y:py};if(TH==='foundry'){P.mx=.85;P.mw=1.4+R()*.5;P.ph=R()*6.283;P.bx=P.x0}PL.push(P);for(let i=0;i<3;i++)C.push({x:x+gap/2-.6+i*.6,y:py+1.2})}
   else if(gap>0&&R()<.6)for(let i=0;i<3;i++)C.push({x:x+gap/2+(i-1)*.75,y:Math.max(ph,h)+2.2-(i===1?-.4:0)});
   x+=gap;const L=Math.round(6+R()*5);seg(x,x+L,h);
@@ -671,7 +711,30 @@ function genWalk(st,si){
   x+=L}
  seg(x,x+18,h);S.push({x0:x+18,x1:x+21,y0:-40,y1:h+12});
  Object.assign(G,{wS:S,wP:PL,wE:E,wC:C.map(c=>Object.assign(c,{got:false})),wCK:CK,wO:[],wp:[],goalX:x+9,goalY:h,goalGot:0,wt:0,camX:-2,camY:0,theme:WTHEME[st.wi%WTHEME.length]});
+ placeKnights(st,si);
+ // final showdown: Lord Bucketon guards the Light Ring pedestal
+ if(st.lord)G.wE.push({k:'lord',x:G.goalX-4.2,y:G.goalY,a:G.goalX-6.6,b:G.goalX-2.6,vx:-.7,hp:3+G.loop,w:.44,h:1.9,t:0,hit:0,dir:-1,wind:0,fireT:2.4,rate:1.7,taunt:0,tauntT:3});
+ // Frostpeak / Magma: an early foe on the starting floor so the action starts within a few seconds
+ if(st.early==='roller')G.wE.push({k:'roller',x:9.4,y:0,a:7.2,b:10.4,vx:-2.2,hp:1,w:.42,h:.84,t:0,hit:0});
+ else if(st.early==='knight')G.wE.push({k:'knight',x:9.6,y:0,a:8.4,b:10.3,vx:-.5,hp:1,w:.38,h:1.55,t:0,hit:0,dir:-1,wind:0,fireT:2.2,rate:2.8});
  G.J={x:1.5,y:0,vx:0,vy:0,dir:1,on:true,onP:null,coy:0,jb:0,sw:0,swCd:0,inv:0,dead:0,anim:0,ck:CK[0]};G.endZ=1e9}
+// ---------- WHITE KNIGHTS: blank white mannequin soldiers with laser guns (original design) ----------
+// Placed with their own RNG so the stage layouts stay the same. A few in stage 3, more in 5/7/8, a tougher squad in 10.
+function placeKnights(st,si){const n=st.kn||0;if(!n)return;const R=rng(seedOf(st,si)*7331+99),loop=G.loop,sq=!!st.knSquad;
+ const ground=()=>G.wE.filter(e=>e.k!=='drone').map(e=>e.x);
+ const segs=G.wS.filter(q=>q.y0<-30&&q.x0>16&&q.x1<G.goalX-8&&q.x1-q.x0>=5.5&&!G.wCK.some(c=>c.x>q.x0-1&&c.x<q.x1+1));
+ const want=sq?Math.ceil(n/2):n,pool=segs.slice(),pick=[];
+ // spread them out: split the candidate floors into 'want' bands along the stage and take one floor per band
+ for(let b=0;b<want&&pool.length;b++){const lo=16+(G.goalX-24)*b/want,hi=16+(G.goalX-24)*(b+1)/want;let c=pool.filter(q=>q.x0>=lo-4&&q.x0<hi);if(!c.length)c=pool;const q=c[Math.floor(R()*c.length)];pick.push(q);pool.splice(pool.indexOf(q),1)}
+ pick.sort((a,b)=>a.x0-b.x0);let k=0;
+ for(const q of pick){const many=sq&&k+1<n?2:1,L=q.x1-q.x0;
+  for(let j=0;j<many;j++){let best=q.x0+L*.6,bd=-1;const g=ground();
+   for(let f=.3;f<=.85;f+=.05){const x=q.x0+L*f;if(many===2&&j===1&&x<pick._last+1.6)continue;const dd=Math.min(9,...g.map(v=>Math.abs(v-x)));if(dd>bd){bd=dd;best=x}}
+   const x=best;pick._last=x;
+   G.wE.push({k:'knight',x,y:q.y1,a:Math.max(q.x0+.6,x-1.2),b:Math.min(q.x1-.6,x+1.2),vx:(R()<.5?-1:1)*(.55+loop*.1),hp:sq&&j===1?2:1,w:.38,h:1.55,t:R()*6,hit:0,dir:-1,wind:0,
+    fireT:(sq?1.4:1.9)+R()*1.4,rate:sq?1.9:2.6});k++}}}
+function knightShot(e){const J=G.J,lord=e.k==='lord',gx=e.x+e.dir*(lord?.7:.62),gy=e.y+(lord?.65:.98),dx=J.x-gx,dy=(J.y+.95)-gy,l=Math.hypot(dx,dy)||1,v=6.2+G.loop*.6;
+ G.wO.push({x:gx,y:gy,vx:dx/l*v,vy:dy/l*v,life:3.2,laser:1,lord});sfx('laser')}
 function wburst(x,y,n,col,sp){for(let i=0;i<n;i++){const a=Math.random()*6.283,v=(sp||4)*(.3+Math.random());G.wp.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v+1.5,life:.5+Math.random()*.5,c:col||(Math.random()<.5?'#ffd23a':'#ff7a2e')})}}
 function wpop(n,x,y){G.score+=0;addScore(n);G.pops.push({t:1,n,wx:x,wy:y})}
 function walkSolidHit(x,y,pw,ph){for(const s of G.wS)if(x+pw>s.x0&&x-pw<s.x1&&y<s.y1-.001&&y+ph>s.y0)return s;return null}
@@ -690,7 +753,7 @@ function updateWalk(dt){const J=G.J;G.wt+=dt;
  if(J.jb>0&&J.coy>0){J.vy=WK.jv;J.on=false;J.coy=0;J.jb=0;sfx('jump');wburst(J.x,J.y,5,'#cfd6e8',2)}
  J.vy=Math.max(-22,J.vy-WK.g*dt);
  J.x+=J.vx*dt;const sh=walkSolidHit(J.x,J.y,WK.pw,WK.ph);if(sh){if(J.vx>0||J.x<(sh.x0+sh.x1)/2)J.x=sh.x0-WK.pw-.001;else J.x=sh.x1+WK.pw+.001;J.vx=0}
- const py=J.y;J.y+=J.vy*dt;J.on=false;J.onP=null;
+ const py=J.y;J.py=py;J.y+=J.vy*dt;J.on=false;J.onP=null;
  for(const s of G.wS){if(J.x+WK.pw>s.x0&&J.x-WK.pw<s.x1&&J.y<s.y1&&J.y+WK.ph>s.y0){if(J.vy<=0&&py>=s.y1-.08){J.y=s.y1;J.vy=0;J.on=true}else if(J.vy>0){J.y=s.y0-WK.ph;J.vy=0}}}
  if(J.vy<=0)for(const p of G.wP){if(J.x+WK.pw*.6>p.x0&&J.x-WK.pw*.6<p.x1&&py>=p.y-.02&&J.y<=p.y){J.y=p.y;J.vy=0;J.on=true;if(p.mx)J.onP=p}}
  J.swCd-=dt;if(strike&&J.swCd<=0){J.sw=.3;J.swv=.45;J.swCd=.34;sfx('swing')}J.sw=Math.max(0,J.sw-dt);J.swv=Math.max(0,(J.swv||0)-dt);J.inv=Math.max(0,J.inv-dt);J.anim+=Math.abs(J.vx)*dt;
@@ -699,30 +762,41 @@ function updateWalk(dt){const J=G.J;G.wt+=dt;
  for(const c of G.wCK)if(!c.on&&J.x>c.x){c.on=true;J.ck=c;msg('Checkpoint!',1.2);sfx('fuel')}
  for(const c of G.wC)if(!c.got&&Math.abs(c.x-J.x)<.55&&c.y>J.y-.2&&c.y<J.y+WK.ph+.3){c.got=true;wpop(PTS.crystal,c.x,c.y);wburst(c.x,c.y,6,'#8ff4ff',2.5);sfx('crystal')}
  updateWalkFoes(dt);
+ const LB=G.wE.find(e=>e.k==='lord');if(LB&&LB.dead&&!LB.said){LB.said=1;msg('Lord Bucketon is defeated!',2.4);sfx('bigboom');G.shake=1}
+ if(LB&&!LB.dead&&J.x>G.goalX-1.7&&J.dead<=0){J.x=G.goalX-1.7;J.vx=Math.min(0,J.vx);if(!G.msgs.length)msg('Defeat Lord Bucketon first!',1.4)}
  if(!G.goalGot&&J.alive!==false&&J.x>G.goalX-.7&&J.dead<=0){G.goalGot=1;wburst(G.goalX,G.goalY+2.2,40,'#fff6c8',6);wburst(G.goalX,G.goalY+2.2,24,'#8fe8ff',5);msg(G.st.fin?'You found the Light Ring!':'Light Ring piece found!',2.6);stageClear()}}
 function updateWalkFoes(dt){const J=G.J,alive=J.dead<=0,sb=J.sw>.05&&alive?swingBox(J):null;
  for(const e of G.wE){if(e.dead)continue;e.t+=dt;e.hit=Math.max(0,e.hit-dt);
   if(e.k==='drone'){e.x=e.cx+Math.sin(e.t*.8)*e.r;e.y=e.cy+Math.sin(e.t*2.1)*.3;const dx=J.x-e.x;
    if(alive&&Math.abs(dx)<9){e.fireT-=dt;if(e.fireT<=0){e.fireT=Math.max(1.6,3.2-G.loop*.3)+Math.random();const dy=(J.y+1)-e.y,l=Math.hypot(dx,dy)||1,v=3.6+G.loop*.4;G.wO.push({x:e.x,y:e.y,vx:dx/l*v,vy:dy/l*v,life:5});sfx('plasma')}}}
+  else if(e.k==='knight'||e.k==='lord'){const dx=J.x-e.x;if(e.k==='lord'){e.tauntT-=dt;if(e.tauntT<=0&&e.wind<=0){e.taunt=.9;e.tauntT=3.2+Math.random()*1.5}e.taunt=Math.max(0,e.taunt-dt)}
+   if(e.wind>0){e.wind-=dt;e.dir=dx<0?-1:1;if(e.wind<=0){e.wind=0;if(alive)knightShot(e)}}
+   else{if(e.hit<=0)e.x+=e.vx*dt;if(e.x<e.a){e.x=e.a;e.vx=Math.abs(e.vx)}if(e.x>e.b){e.x=e.b;e.vx=-Math.abs(e.vx)}e.dir=Math.abs(dx)<9?(dx<0?-1:1):(e.vx<0?-1:1);
+    if(alive&&Math.abs(dx)<8.5&&Math.abs(J.y-e.y)<4.5){e.fireT-=dt;if(e.fireT<=0){e.fireT=e.rate+Math.random()*.9-G.loop*.2;e.wind=.6;sfx('ping')}}}}   // .6 s gun glow = fair warning
   else if(e.k==='flamer'){const dx=J.x-e.x;if(alive&&Math.abs(dx)<8.5&&dx>-6){e.fireT-=dt;if(e.fireT<=0){e.fireT=Math.max(1.7,2.9-G.loop*.3)+Math.random()*.9;
     const t=1.05,gy=14,sy=e.y+e.h,dy=(J.y+.9)-sy;G.wO.push({x:e.x,y:sy,vx:clamp((dx+J.vx*.3)/t,-6,6),vy:(dy+.5*gy*t*t)/t,life:4,g:gy,fire:1});sfx('plasma')}}}
   else{if(e.hit<=0)e.x+=e.vx*dt;if(e.x<e.a){e.x=e.a;e.vx=Math.abs(e.vx)}if(e.x>e.b){e.x=e.b;e.vx=-Math.abs(e.vx)}
    if(e.k==='hopper'){e.hopT-=dt;if(e.jy<=0&&e.hopT<=0){e.jv=7.2;e.hopT=1+Math.random()*1}if(e.jv||e.jy>0){e.jy+=e.jv*dt;e.jv-=28*dt;if(e.jy<=0){e.jy=0;e.jv=0}}}}
   const ey0=e.k==='drone'?e.y-e.h/2:e.y+(e.jy||0),ey1=ey0+e.h;
-  if(sb&&e.hit<=0&&e.x+e.w>sb.x0&&e.x-e.w<sb.x1&&ey1>sb.y0&&ey0<sb.y1){e.hp--;e.hit=.32;wburst(e.x,(ey0+ey1)/2,6,'#bfe8ff',3);
-   if(e.hp<=0){e.dead=true;wpop(PTS[e.k],e.x,ey1);wburst(e.x,(ey0+ey1)/2,18);sfx('boom')}else{sfx('ping');if(e.k!=='drone'){e.x=clamp(e.x+J.dir*.9,e.a,e.b);e.hit=.6}}continue}
+  if(sb&&e.hit<=(e.k==='drone'?0:.28)&&e.x+e.w>sb.x0&&e.x-e.w<sb.x1&&ey1>sb.y0&&ey0<sb.y1){e.hp--;e.hit=.32;wburst(e.x,(ey0+ey1)/2,6,'#bfe8ff',3);
+   if(e.hp<=0){e.dead=true;wpop(PTS[e.k],e.x,ey1);wburst(e.x,(ey0+ey1)/2,18);sfx('boom')}else{sfx('ping');if(e.k!=='drone'){e.x=clamp(e.x+J.dir*(e.k==='lord'?1.8:e.k==='knight'?1.3:.9),e.a,e.b);e.hit=e.k==='lord'?.8:.6;if(e.k==='lord')e.wind=0}}continue}
   if(alive&&J.x+WK.pw>e.x-e.w&&J.x-WK.pw<e.x+e.w&&J.y+WK.ph>ey0&&J.y<ey1){
-   if(J.vy<-1&&J.y>ey0+e.h*.45&&e.k!=='drone'){e.hp--;J.vy=9;if(e.hp<=0){e.dead=true;wpop(PTS[e.k],e.x,ey1);wburst(e.x,ey1,16);sfx('boom')}else{e.hit=.3;sfx('ping')}}
+   if(J.vy<-1&&(J.y>ey0+e.h*.45||(J.py!=null&&J.py>=ey1-.3))&&e.k!=='drone'){e.hp--;J.vy=9;if(e.hp<=0){e.dead=true;wpop(PTS[e.k],e.x,ey1);wburst(e.x,ey1,16);sfx('boom')}else{e.hit=.3;sfx('ping')}}
+   else if(e.k!=='drone'&&e.hit>0){J.inv=Math.max(J.inv,.5)}   // touching a foe you just hit (stunned) is safe, with a moment to step away
    else if(J.inv<=0){walkDie(e.k==='drone'?'Zapped by a drone!':WFOE[e.k]||'Bumped by a scrap bot!');return}}}
  for(const o of G.wO){if(o.g)o.vy-=o.g*dt;o.x+=o.vx*dt;o.y+=o.vy*dt;o.life-=dt;
+  if(o.ref){let hitE=null;for(const e of G.wE){if(e.dead)continue;const ey0=e.k==='drone'?e.y-e.h/2:e.y+(e.jy||0);if(Math.abs(o.x-e.x)<e.w+.15&&o.y>ey0&&o.y<ey0+e.h){hitE=e;break}}
+   if(hitE){o.life=0;hitE.hp--;hitE.hit=.3;wburst(o.x,o.y,10,'#8ff4ff',3);if(hitE.hp<=0){hitE.dead=true;wpop(PTS[hitE.k]+200,hitE.x,hitE.y+hitE.h);wburst(hitE.x,hitE.y+hitE.h/2,18);sfx('boom')}else sfx('ping');continue}
+   if(walkSolidHit(o.x,o.y,.05,.05))o.life=0;continue}
+  if(o.laser&&sb&&o.x>sb.x0-.15&&o.x<sb.x1+.15&&o.y>sb.y0&&o.y<sb.y1){o.ref=1;o.vx=-o.vx*1.25;o.vy=-o.vy*.6;o.life=2;wburst(o.x,o.y,8,'#8ff4ff',3);sfx('ping');wpop(PTS.orb,o.x,o.y);continue}
   if(sb&&o.x>sb.x0&&o.x<sb.x1&&o.y>sb.y0&&o.y<sb.y1){o.life=0;wpop(PTS.orb,o.x,o.y);wburst(o.x,o.y,8,o.fire?'#ffb040':'#ff9ae8',3);sfx('ping');continue}
-  if(alive&&J.inv<=0&&Math.abs(o.x-J.x)<WK.pw+.12&&o.y>J.y&&o.y<J.y+WK.ph){o.life=0;walkDie(o.fire?'Hit by a fireball!':'Hit by a drone shot!');return}
+  if(alive&&J.inv<=0&&Math.abs(o.x-J.x)<WK.pw+.12&&o.y>J.y&&o.y<J.y+WK.ph){o.life=0;walkDie(o.lord?'Zapped by Lord Bucketon!':o.laser?'Hit by a White Knight laser!':o.fire?'Hit by a fireball!':'Hit by a drone shot!');return}
   if(walkSolidHit(o.x,o.y,.05,.05))o.life=0}
  G.wO=G.wO.filter(o=>o.life>0)}
 function walkDie(why){const J=G.J;if(J.dead>0)return;J.carryT=0;J.dead=1.6;G.lives--;wburst(J.x,J.y+1,26,'#9fe0ff',5);wburst(J.x,J.y+1,14);sfx('die');G.shake=.8;G.hitFlash=1;msg(why,1.8)}
 function walkRespawn(){const J=G.J;if(G.lives<=0){state='over';save.hi=Math.max(save.hi||0,G.score);persist();sfx('over');musicFor(null);return}
  const c=J.ck;Object.assign(J,{x:c.x,y:c.y+.05,vx:0,vy:0,dir:1,on:false,onP:null,inv:2.2,sw:0,swv:0,carryT:0,dead:0});J.botTP=null;G.wO=[];
- for(const e of G.wE)if(!e.dead&&Math.abs(e.x-c.x)<3){if(e.k==='drone')e.t+=3;else if(e.k==='flamer')e.fireT=Math.max(e.fireT,2.5);else e.x=e.b}msg('Get ready!',1.2)}
+ for(const e of G.wE)if(!e.dead&&Math.abs(e.x-c.x)<3){if(e.k==='drone')e.t+=3;else if(e.k==='flamer'||e.k==='knight'){e.fireT=Math.max(e.fireT,2.5);e.wind=0}else e.x=e.b}msg('Get ready!',1.2)}
 // test/demo bot: run right, jump gaps/walls/foes, swing at anything close
 function walkBot(){const J=G.J;let j=false,s=false;const ahead=J.x+.9;
  const ground=G.wS.some(q=>ahead>q.x0&&ahead<q.x1&&q.y1<=J.y+.05&&q.y1>J.y-1.5)||G.wP.some(p=>ahead>p.x0&&ahead<p.x1&&Math.abs(p.y-J.y)<.1);
@@ -783,13 +857,15 @@ function drawWalk(o){const J=G.J,th=G.theme,{T,base}=walkView(o),s=o.s;const vis
   else if(e.k==='flamer'){const w=e.w*T*2,h=e.h*T,pulse=e.fireT<.5?1:0;ctx.fillStyle=fl?'#fff':'#5a4a48';ctx.fillRect(x-w/2,y-h*.45,w,h*.45);ctx.fillStyle='#2a1e1e';ctx.fillRect(x-w*.6,y-h*.1,w*1.2,h*.1);
    ctx.fillStyle=fl?'#fff':'#7a6260';ctx.beginPath();ctx.arc(x,y-h*.45,w*.42,Math.PI,0);ctx.fill();ctx.fillStyle='#3a2a28';ctx.fillRect(x-T*.1,y-h*1.05,T*.2,h*.4);
    ctx.save();ctx.shadowColor='#ff7a1a';ctx.shadowBlur=T*(pulse?.8:.35);circ(x,y-h*1.05,T*(pulse?.16:.11),pulse?'#ffe14a':'#ff7a1a');ctx.restore();ctx.fillStyle='#ffb040';ctx.fillRect(x-w*.3,y-h*.3,w*.6,h*.08)}
+  else if(e.k==='knight'){drawKnight(x,y,T,e,fl)}
+  else if(e.k==='lord'){drawBucketon(x,y,T*.82,e.dir||-1,TIME,e.taunt>0,fl,e.wind>0,e.t);if(e.hp>0){for(let i=0;i<e.hp;i++)circ(x-(e.hp-1)*T*.12+i*T*.24,y-T*2.2,T*.08,'#ff4a5a')}}
   else if(e.k==='drone'){const dc=th.name==='dunes'?'#3fa07a':th.name==='frost'?'#4a8fd8':'#7a4fd0';ctx.save();ctx.translate(x,y);ctx.fillStyle=fl?'#fff':dc;ctx.beginPath();ctx.ellipse(0,0,T*.45,T*.24,0,0,6.283);ctx.fill();ctx.fillStyle='#3a2470';ctx.fillRect(-T*.5,-T*.04,T,T*.08);
    const wv=Math.abs(Math.sin(TIME*30))*T*.35;ctx.fillStyle='rgba(220,220,255,.6)';ctx.fillRect(-T*.35-wv/2,-T*.36,wv,T*.05);ctx.fillRect(T*.35-wv/2,-T*.36,wv,T*.05);circ(0,T*.02,T*.12,'#ffe14a');circ(0,T*.02,T*.05,'#300');ctx.restore()}
   else{const big=e.k==='brute',w=e.w*T*2,h=e.h*T,dir=e.vx>0?1:-1;ctx.fillStyle=fl?'#fff':(big?'#d8742e':'#8f97a8');ctx.fillRect(x-w/2,y-h,w,h*.78);ctx.fillStyle='#2b3040';ctx.fillRect(x-w/2,y-h*.22,w,h*.22);
    ctx.fillStyle='#1a1d28';const wb=Math.sin(e.t*10)*T*.05;circ(x-w*.28,y-h*.08+wb,h*.11,'#111');circ(x+w*.28,y-h*.08-wb,h*.11,'#111');
    ctx.fillStyle='#200';ctx.fillRect(x-w*.36,y-h*.82,w*.72,h*.2);ctx.save();ctx.shadowColor='#ff3030';ctx.shadowBlur=T*.3;ctx.fillStyle='#ff4040';ctx.fillRect(x+dir*w*.08-w*.12,y-h*.78,w*.24,h*.12);ctx.restore();
    ctx.fillStyle='#bfc6d6';ctx.fillRect(x-T*.03,y-h-T*.25,T*.06,T*.25);circ(x,y-h-T*.27,T*.07,big?'#ffcf3a':'#ff6a6a')}}
- for(const o of G.wO){const x=X(o.x),y=Y(o.y);ctx.save();ctx.shadowColor=o.fire?'#ff7a1a':'#ff5ad8';ctx.shadowBlur=T*.4;circ(x,y,T*(o.fire?.18:.14),o.fire?'#ffb040':'#ff9ae8');circ(x,y,T*.07,o.fire?'#fff6c0':'#fff');ctx.restore()}
+ for(const o of G.wO){const x=X(o.x),y=Y(o.y);if(o.laser){const l=Math.hypot(o.vx,o.vy)||1,ux=o.vx/l,uy=-o.vy/l,c=o.ref?'#8ff4ff':'#ff3b6b';ctx.save();ctx.lineCap='round';ctx.shadowColor=c;ctx.shadowBlur=T*.4;ctx.strokeStyle=c;ctx.lineWidth=Math.max(4,T*.16);ctx.beginPath();ctx.moveTo(x-ux*T*.45,y-uy*T*.45);ctx.lineTo(x+ux*T*.45,y+uy*T*.45);ctx.stroke();ctx.shadowBlur=0;ctx.strokeStyle='#fff';ctx.lineWidth=Math.max(2,T*.06);ctx.stroke();ctx.restore();continue}ctx.save();ctx.shadowColor=o.fire?'#ff7a1a':'#ff5ad8';ctx.shadowBlur=T*.4;circ(x,y,T*(o.fire?.18:.14),o.fire?'#ffb040':'#ff9ae8');circ(x,y,T*.07,o.fire?'#fff6c0':'#fff');ctx.restore()}
  if(th.name==='frost'){ctx.fillStyle='rgba(255,255,255,.75)';for(let i=0;i<46;i++){const m=s.w+40,fx=s.l-20+((((i*97.3+TIME*(14+i%5*4)-G.camX*T*.5)%m)+m)%m),fy=((i*53.7+TIME*(40+i%7*9))%(H+20))-10;ctx.fillRect(fx,fy,3,3)}}
  // Jim
  if(J.dead<=0&&(J.swv>0||!(J.inv>0&&Math.floor(TIME*12)%2)))drawFootJim(X(J.x),Y(J.y),T,J);
@@ -797,6 +873,18 @@ function drawWalk(o){const J=G.J,th=G.theme,{T,base}=walkView(o),s=o.s;const vis
  for(const p of G.wp){ctx.globalAlpha=clamp(p.life*2,0,1);ctx.fillStyle=p.c;ctx.fillRect(X(p.x)-T*.06,Y(p.y)-T*.06,T*.12,T*.12)}ctx.globalAlpha=1;
  for(const p of G.pops)if(p.wx!=null){ctx.globalAlpha=clamp(p.t*1.5,0,1);txt(null,'+'+p.n,X(p.wx),Y(p.wy)-(1-p.t)*T*1.2-T*.3,17,'#ffe14a');ctx.globalAlpha=1}
  if(state==='clear'){const x=X(G.goalX),y=Y(G.goalY)-T*2.4;if(G.st.fin)drawLightRing(x,y,T*.75,RINGN,TIME,true);else drawRingPiece(x,y-(3.4-G.clearT)*T*.6,T*.7,G.si%NST,TIME)}}
+// White Knight: smooth blank mannequin (round featureless head, rounded limbs) in soft white/grey, holding an original stubby ray gun
+function drawKnight(x,y,T,e,fl){const u=T/10,d=e.dir||1,mv=e.wind<=0&&Math.abs(e.vx)>.01&&e.hit<=0,ph=mv?Math.sin(e.t*7):0,W1=fl?'#ffffff':'#f3f4f6',W2=fl?'#ffffff':'#d5d8de',W3='#b9bdc6';
+ ctx.save();ctx.translate(Math.round(x),Math.round(y));ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(0,0,T*.42,T*.08,0,0,6.283);ctx.fill();ctx.scale(d,1);
+ const rr2=(x0,y0,w,h,r,c)=>{ctx.fillStyle=c;ctx.beginPath();ctx.moveTo(x0+r,y0);ctx.arcTo(x0+w,y0,x0+w,y0+h,r);ctx.arcTo(x0+w,y0+h,x0,y0+h,r);ctx.arcTo(x0,y0+h,x0,y0,r);ctx.arcTo(x0,y0,x0+w,y0,r);ctx.fill()};
+ for(const [ox,s] of [[-1.1,1],[1.1,-1]]){const lx=ox*u+ph*s*1.2*u;rr2(lx-1*u,-6.2*u,2*u,6*u,u,s>0?W2:W1);rr2(lx-1.2*u,-1.1*u,2.9*u,1.2*u,.6*u,W2)}
+ rr2(-1.6*u,-11.6*u,1.6*u,5*u,.8*u,W3);rr2(-2.4*u,-12.4*u,4.8*u,6.8*u,2*u,W1);ctx.fillStyle='rgba(0,0,0,.07)';ctx.fillRect(.9*u,-12*u,1.4*u,6*u);
+ const hy=-15.6*u;circ(0,hy,3.5*u,W1);ctx.fillStyle='rgba(0,0,0,.08)';ctx.beginPath();ctx.arc(.6*u,hy+.5*u,3.1*u,-.6,1.9);ctx.fill();circ(-1.2*u,hy-1.3*u,.9*u,'rgba(255,255,255,.9)');
+ rr2(-.2*u,-11.2*u,4.6*u,1.6*u,.8*u,W2);const gx=4.2*u,gy=-11.6*u,glow=e.wind>0?1-e.wind/.6:0;
+ rr2(gx-.4*u,gy-.2*u,1.2*u,2.2*u,.4*u,'#5f6b7d');rr2(gx-.6*u,gy-1*u,3.4*u,1.5*u,.7*u,'#7f8da3');ctx.fillStyle='#9fb0c8';ctx.fillRect(gx+.1*u,gy-.85*u,1.8*u,.35*u);
+ ctx.save();if(glow>0){ctx.shadowColor='#ff3b6b';ctx.shadowBlur=T*(.3+glow*.9)}circ(gx+3*u,gy-.25*u,(.45+glow*.55)*u,glow>0?(glow>.5?'#ffe0e8':'#ff7a98'):'#c33a5a');ctx.restore();
+ if(e.hp>1){ctx.fillStyle='#7fc8ff';ctx.fillRect(-2.4*u,-9.8*u,4.8*u,.7*u)}
+ ctx.restore()}
 // Jim on foot: pixel-built robe body + his pixel likeness head (cropped from jim.png, never a photo)
 function drawFootJim(x,y,T,J){const u=T/10,d=J.dir;ctx.save();ctx.translate(Math.round(x),Math.round(y));ctx.scale(d,1);
  const run=J.on&&Math.abs(J.vx)>.5,ph=Math.sin(J.anim*3.2),air=!J.on;
