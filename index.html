@@ -506,7 +506,7 @@ const lowF=G.fuel<25&&Math.floor(TIME*4)%2;ctx.fillStyle='rgba(0,0,0,.55)';rr(fx
  if(G.st.k==='space'){txt(null,'Raiders '+Math.min(G.kills,G.need)+' / '+G.need,o.s.l+o.s.w/2,o.top+12,17,'#ffd0a0')}
  // swipe feedback (anchor ring + direction) and first-time hint
  if(JOY.active){ctx.globalAlpha=.55;ctx.strokeStyle='#8fd0ff';ctx.lineWidth=3;ctx.beginPath();ctx.arc(JOY.sx,JOY.sy,26,0,6.283);ctx.stroke();if(Math.hypot(JOY.dx,JOY.dy)>.2){const ex=JOY.sx+JOY.dx*44,ey=JOY.sy+JOY.dy*44;ctx.beginPath();ctx.moveTo(JOY.sx,JOY.sy);ctx.lineTo(ex,ey);ctx.stroke();circ(ex,ey,9,'#8fd0ff')}ctx.globalAlpha=1}
- else if(!window.__CAP&&(!SWIPED||G.t<4)){const HL=walk?['👆 Swipe ◀ ▶','to run']:['👆 Swipe to steer','▲ up / ▼ down = height'],HS=20;ctx.font=font(HS);const need=Math.max(...HL.map(l=>ctx.measureText(l).width))+8;
+ else if(!window.__CAP&&state!=='intro'&&(!SWIPED||G.t<4)){const HL=walk?['👆 Swipe ◀ ▶','to run']:['👆 Swipe to steer','▲ up / ▼ down = height'],HS=20;ctx.font=font(HS);const need=Math.max(...HL.map(l=>ctx.measureText(l).width))+8;
   const a0=o.s.l+8,a1=o.b2[0]-o.b2[2]-8;let hx,hy;if(walk&&o.s.w>o.s.h){hx=o.s.l+o.s.w*.45;hy=o.top+Math.max(64,(o.bot-o.top)*.3)}   // landscape on foot: up in the sky, clear of Jim and the ground
   else if(a1-a0>=need){hx=a0+(a1-a0)/2;hy=o.b1[1]-12}else{hx=o.s.l+o.s.w/2;hy=o.ctrlTop-HS*2.2}
   ctx.globalAlpha=.9;HL.forEach((l,i)=>txt(null,l,hx,hy+i*(HS+5),HS,'#fff',null,o.s.w-16,{oc:'rgba(0,0,0,.8)'}));ctx.globalAlpha=1}
@@ -748,7 +748,8 @@ function updateWalk(dt){const J=G.J;G.wt+=dt;
  if(J.onP&&J.onP.dx)J.x+=J.onP.dx;
  ix=Math.abs(ix)<.18?0:Math.sign(ix)*Math.min(1,Math.abs(ix)*1.25);
  if(J.carryT>0){J.carryT-=dt;if(ix&&Math.sign(ix)!==J.carryDir)J.carryT=0;else if(!ix&&!(typeof JOY!=='undefined'&&JOY.active))ix=J.carryDir*Math.min(1,J.carryT/.12+.15)}
- J.vx+=(ix*WK.run-J.vx)*Math.min(1,dt*(J.on?(G.st.ice?4.5:14):8));   // Frostpeak ice: slower grip on the groundif(ix)J.dir=ix>0?1:-1;
+ J.vx+=(ix*WK.run-J.vx)*Math.min(1,dt*(J.on?(G.st.ice?4.5:14):8));   // Frostpeak ice: slower grip on the ground
+ if(ix)J.dir=ix>0?1:-1;
  if(jump)J.jb=.15;J.jb-=dt;J.coy=J.on?.1:J.coy-dt;
  if(J.jb>0&&J.coy>0){J.vy=WK.jv;J.on=false;J.coy=0;J.jb=0;sfx('jump');wburst(J.x,J.y,5,'#cfd6e8',2)}
  J.vy=Math.max(-22,J.vy-WK.g*dt);
