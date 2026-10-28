@@ -110,7 +110,7 @@ function spark(x,y,z){boom(x,y,z,5,'#bfe8ff')}
 function update(dt){
  if(!G)return;G.t+=dt;
  for(const p of G.parts){p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;p.vy-=4*dt;p.life-=dt}G.parts=G.parts.filter(p=>p.life>0&&p.y>-.5);
- for(const p of G.pops)p.t-=dt*.8;G.pops=G.pops.filter(p=>p.t>0);for(const m of G.msgs)m.life-=dt;G.msgs=G.msgs.filter(m=>m.life>0);
+ for(const p of G.pops)p.t-=dt*.8;G.pops=G.pops.filter(p=>p.t>0);for(const m of G.msgs)if(!m.wait)m.life-=dt;G.msgs=G.msgs.filter(m=>m.life>0);
  G.hitFlash=Math.max(0,G.hitFlash-dt*2);G.shake=Math.max(0,G.shake-dt*3);
  if(state==='intro'){G.introT-=dt;if(G.introT<=0){state='play';msg(G.st.k==='walk'?'Swipe to run. Tap JUMP and LAZORD!':G.st.k==='fort'?'Get low to shoot the fuel tanks!':'Line up your height with the raiders!',2.4)}return}
  if(state==='clear'){G.clearT-=dt;if(G.st.k!=='walk')G.ship.z+=G.speed*dt;if(G.clearT<=0){const nx=G.si+1;if(nx%NST===0){state='win';sfx('win')}else startStage(nx)}return}
@@ -128,7 +128,7 @@ function update(dt){
   s.x=clamp(s.x+s.vx*dt,XMIN,XMAX);s.alt=clamp(s.alt+s.va*dt,ALTMIN,ALTMAX);if((s.x<=XMIN&&s.vx<0)||(s.x>=XMAX&&s.vx>0))s.vx=0;if((s.alt<=ALTMIN&&s.va<0)||(s.alt>=ALTMAX&&s.va>0))s.va=0;
   s.bank=lerp(s.bank,s.vx/5.4,Math.min(1,dt*8));s.inv=Math.max(0,s.inv-dt);
   const z0=s.z;
-  if(G.boss&&G.boss.alive&&s.z>=G.bossZ-12){s.z=G.bossZ-12;if(!G.bossOn){G.bossOn=true;msg(G.boss.kind===1?'The Warden! Hit its core when it glows!':'Lord Bucketon! Shoot when his visor lifts!',2.8);musicFor('boss')}}
+  if(G.boss&&G.boss.alive&&s.z>=G.bossZ-12){s.z=G.bossZ-12;if(!G.bossOn){G.bossOn=true;msg(G.boss.kind===1?'The Warden! Hit its core when it glows!':'Lord Bucketon! Shoot when his visor lifts!',2.8);if(G.boss.kind===2){G.msgs[0].wait=true;G.msgs[0].boss=true};musicFor('boss')}}
   else s.z+=G.speed*dt;
   G.fireT-=dt;if(fire&&G.fireT<=0){G.fireT=.17;G.bolts.push({x:s.x,y:s.alt,z:s.z+.9,life:.75});sfx('laser')}
   if(!G.bossOn){G.fuel-=dt*(fort?2.7+G.loop*.25:1.1);if(G.fuel<25){G.lowT-=dt;if(G.lowT<=0){G.lowT=1;sfx('low');if(G.fuel>0)msg('Fuel low! Shoot fuel tanks!',1.2)}}}
@@ -212,7 +212,14 @@ function setCam(top,bot){const port=H>W*1.12;CAM.port=port;let F,L,u;
  u=Math.max(16,u);CAM.u=u;CAM.fx=F[0]*u;CAM.fy=F[1]*u;CAM.lx=L[0]*u;CAM.ly=L[1]*u;CAM.a=u*.82;
  const latH=3.6*Math.abs(CAM.ly),latW=3.6*CAM.lx,altH=ALTMAX*CAM.a;
  if(port){const tg=bossLive?u*2.8:0;CAM.sh=(CAM.sh||0)+(tg-(CAM.sh||0))*.05;CAM.ox=W*.5-u*.5-CAM.sh;CAM.oy=clamp(top+(bot-top)*.68+CAM.sh*.8,top+altH+latH+u*.6,bot-latH-u*.4)}
- else{CAM.ox=Math.max(latW+u*1.2,W*.3);CAM.oy=clamp(bot-latH-u*(.9-.45*(CAM.lb||0)),top+altH+latH+u*.4,bot-latH-u*.3)}}
+ else{CAM.ox=Math.max(latW+u*1.2,W*.3);CAM.oy=clamp(bot-latH-u*(.9-.45*(CAM.lb||0)),top+altH+latH+u*.4,bot-latH-u*.3)}
+ // v10: keep Lord Bucketon's dome (antenna nubs + bob/wobble) clear of the boss bar + 'LORD BUCKETON' label in both orientations.
+ // Worst case = the highest point of his side-to-side sweep (B.x 1.7..6.3); computed from the unshifted camera so it is steady, eased in with CAM.bk.
+ const bk2=bossLive&&G.boss.kind===2;CAM.bk=(CAM.bk||0)+((bk2?1:0)-(CAM.bk||0))*.05;if(CAM.bk<.002)CAM.bk=0;
+ if((bk2||CAM.bk>0)&&!(typeof G!=='undefined'&&G&&G.boss))CAM.bk=0;
+ if(CAM.bk>0||bk2){const B=G.boss,A=CAM.a*BSC,Ab=A*1.3;let dome=1e9;for(const bx of[1.7,6.3]){const o=P(bx,0,B.z-.5);dome=Math.min(dome,o[1]-A*1.0-2.55*Ab)}
+  CAM.bossLim=top+4+27+9+14;CAM.bd=Math.max(0,CAM.bossLim-dome);CAM.oy+=CAM.bd*CAM.bk}
+ if(CAM.bk>.9&&typeof G!=='undefined'&&G&&G.msgs)for(const m of G.msgs)m.wait=false}
 function P(x,y,z){const dz=z-CAM.z;return[CAM.ox+dz*CAM.fx+(x-4)*CAM.lx,CAM.oy+dz*CAM.fy+(x-4)*CAM.ly-y*CAM.a]}
 function poly(pts,fill,stroke,lw){ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();if(fill){ctx.fillStyle=fill;ctx.fill()}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=lw||1;ctx.stroke()}}
 function line3(a,b,col,lw){ctx.strokeStyle=col;ctx.lineWidth=lw;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}
@@ -511,7 +518,7 @@ const lowF=G.fuel<25&&Math.floor(TIME*4)%2;ctx.fillStyle='rgba(0,0,0,.55)';rr(fx
  // pause + mute
  iconBtn('pause',o.pause,'⏸',()=>go('pause'));iconBtn('mute',o.mute,muted?'🔇':'🔊',toggleMute);
  // boss bar
- if(G.boss&&G.bossOn&&G.boss.alive){const bw=Math.min(260,o.s.w*.5),bx=o.s.l+(o.s.w-bw)/2,by=o.top+4;ctx.fillStyle='rgba(0,0,0,.6)';rr(bx,by,bw,12,6);ctx.fill();ctx.fillStyle='#ff5ad8';rr(bx+2,by+2,(bw-4)*G.boss.hp/G.boss.max,8,4);ctx.fill();txt(null,G.boss.kind===1?'WARDEN':'LORD BUCKETON',bx+bw/2,by+27,16,'#ffd0f4')}
+ if(G.boss&&G.bossOn&&G.boss.alive){const bw=Math.min(260,o.s.w*.5),bx=o.s.l+(o.s.w-bw)/2,by=o.top+4;ctx.fillStyle='rgba(0,0,0,.6)';rr(bx,by,bw,12,6);ctx.fill();ctx.fillStyle='#ff5ad8';rr(bx+2,by+2,(bw-4)*G.boss.hp/G.boss.max,8,4);ctx.fill();if(!G.msgs.some(m=>m.boss&&!m.wait))txt(null,G.boss.kind===1?'WARDEN':'LORD BUCKETON',bx+bw/2,by+27,16,'#ffd0f4')}
  // space kill counter
  if(G.st.k==='space'){txt(null,'Raiders '+Math.min(G.kills,G.need)+' / '+G.need,o.s.l+o.s.w/2,o.top+12,17,'#ffd0a0')}
  // swipe feedback (anchor ring + direction) and first-time hint
@@ -525,10 +532,13 @@ const lowF=G.fuel<25&&Math.floor(TIME*4)%2;ctx.fillStyle='rgba(0,0,0,.55)';rr(fx
  else if(walk){rb(o.b1,'jump','JUMP',BTNP.jump?'#2fb56a':'rgba(31,157,85,.85)',BTNP.jump);rb(o.b2,'lazord','LAZORD',BTNP.lazord?'#18a9c9':'rgba(20,140,190,.85)',BTNP.lazord)}
  else{const fdown=!!FIREP||KEYS.fire;rb(o.b1,'fire','FIRE',fdown?'#2a7bd9':'rgba(42,110,217,.85)',fdown);rb(o.b2,'auto','',AUTO?'#1f9d55':'rgba(40,40,70,.85)',false);txt(null,'AUTO',o.b2[0],o.b2[1]-9,17,'#fff');txt(null,AUTO?'ON':'OFF',o.b2[0],o.b2[1]+11,16,AUTO?'#d8ffd8':'#c8c8e0')}
  // messages
- for(const m of G.msgs){ctx.globalAlpha=clamp(m.life*2,0,1);const my=o.top+(G.bossOn?60:G.st.k==='space'?44:18),mw=o.s.w*.9,msz=Math.max(17,Math.min(20,o.s.w/22));ctx.font=font(msz);
+ for(const m of G.msgs){if(m.wait)continue;ctx.globalAlpha=clamp(m.life*2,0,1);let mt=m.t,my=o.top+(G.bossOn?60:G.st.k==='space'?44:18);const mw=o.s.w*.9,msz=Math.max(17,Math.min(20,o.s.w/22));ctx.font=font(msz);
+  if(m.boss){// v10: Bucketon's intro sits in the label slot under the boss bar (label hidden meanwhile), one line, so the camera keeps his dome clear of it
+   my=o.top+4+27;if(ctx.measureText(mt).width>mw)mt='Shoot Bucketon when his visor lifts!';if(ctx.measureText(mt).width>mw)mt='Shoot when his visor lifts!'}
+  const _t=m.t;m.t=mt;
   if(ctx.measureText(m.t).width<=mw)txt(null,m.t,o.s.l+o.s.w/2,my,msz,'#fff',null,mw,{oc:'#05061a'});
   else{const ws=m.t.split(' ');let best=1,bd=1e9;for(let i=1;i<ws.length;i++){const d=Math.abs(ctx.measureText(ws.slice(0,i).join(' ')).width-ctx.measureText(ws.slice(i).join(' ')).width);if(d<bd){bd=d;best=i}}
-   txt(null,ws.slice(0,best).join(' '),o.s.l+o.s.w/2,my,msz,'#fff',null,mw,{oc:'#05061a'});txt(null,ws.slice(best).join(' '),o.s.l+o.s.w/2,my+msz*1.25,msz,'#fff',null,mw,{oc:'#05061a'})}
+   txt(null,ws.slice(0,best).join(' '),o.s.l+o.s.w/2,my,msz,'#fff',null,mw,{oc:'#05061a'});txt(null,ws.slice(best).join(' '),o.s.l+o.s.w/2,my+msz*1.25,msz,'#fff',null,mw,{oc:'#05061a'})}m.t=_t;
   ctx.globalAlpha=1}}
 function iconBtn(id,r,label,cb){const [x,y,w,h]=r;const pr=BTNDOWN===id;ctx.fillStyle='rgba(10,20,60,.75)';rr(x,y+(pr?2:0),w,h,10);ctx.fill();ctx.strokeStyle='#8fd0ff';ctx.lineWidth=2;ctx.stroke();ctx.font=font(h*.48);ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#fff';ctx.fillText(label,x+w/2,y+h/2+1+(pr?2:0));ctx.textBaseline='alphabetic';reg('btn:'+id,x,y,w,h);BTN.push({id,x,y,w,h,cb})}
 function panel(w,h){const s=S();w=Math.min(w,s.w-24);h=Math.min(h,s.h-24);const x=s.l+(s.w-w)/2,y=s.t+(s.h-h)/2;ctx.fillStyle='rgba(8,12,40,.9)';rr(x,y,w,h,18);ctx.fill();ctx.strokeStyle='#8fd0ff';ctx.lineWidth=3;ctx.stroke();return{x,y,w,h}}
@@ -746,6 +756,13 @@ function placeKnights(st,si){const n=st.kn||0;if(!n)return;const R=rng(seedOf(st
 function knightShot(e){const J=G.J,lord=e.k==='lord',gx=e.x+e.dir*(lord?.7:.62),gy=e.y+(lord?.65:.98),dx=J.x-gx,dy=(J.y+.95)-gy,l=Math.hypot(dx,dy)||1,v=6.2+G.loop*.6;
  G.wO.push({x:gx,y:gy,vx:dx/l*v,vy:dy/l*v,life:3.2,laser:1,lord});sfx('laser')}
 function wburst(x,y,n,col,sp){for(let i=0;i<n;i++){const a=Math.random()*6.283,v=(sp||4)*(.3+Math.random());G.wp.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v+1.5,life:.5+Math.random()*.5,c:col||(Math.random()<.5?'#ffd23a':'#ff7a2e')})}}
+// v10: a bounce that doesn't count (damaged 2-hit foe, Jim hasn't landed yet) pops Jim off to the side, toward solid ground,
+// and shows a short 'Land first' cue, so he doesn't pogo forever on its head. Hit rules unchanged.
+function wGroundAt(x,y){for(const s of G.wS)if(x>=s.x0&&x<=s.x1&&Math.abs(s.y1-y)<.25)return true;for(const p of G.wP)if(x>=p.x0&&x<=p.x1&&Math.abs(p.y-y)<.25)return true;return false}
+function stompPop(J,e){let side=J.x>e.x+.02?1:J.x<e.x-.02?-1:(J.dir||1);const d=1.6;
+ if(!wGroundAt(e.x+side*d,e.y)&&wGroundAt(e.x-side*d,e.y))side=-side;
+ const ok=wGroundAt(e.x+side*d,e.y);J.vx=side*(ok?5.2:2.6);J.popT=ok?.32:.12;J.carryT=0;
+ if(!(G.wt<(J.lfT||0))){J.lfT=G.wt+2.4;msg('Land first, then stomp again!',1.4)}}
 function wpop(n,x,y){G.score+=0;addScore(n);G.pops.push({t:1,n,wx:x,wy:y})}
 function walkSolidHit(x,y,pw,ph){for(const s of G.wS)if(x+pw>s.x0&&x-pw<s.x1&&y<s.y1-.001&&y+ph>s.y0)return s;return null}
 function swingBox(J){const x0=J.dir>0?J.x-.2:J.x-1.95;return{x0,x1:x0+2.15,y0:J.y-.1,y1:J.y+2.4}}
@@ -759,7 +776,8 @@ function updateWalk(dt){const J=G.J;G.wt+=dt;
  ix=Math.abs(ix)<.18?0:Math.sign(ix)*Math.min(1,Math.abs(ix)*1.25);
  if(strike)J.carryT=0;   // v9: tapping LAZORD stops a leftover flick run, so Jim doesn't slide into the foe after swinging
  if(J.carryT>0){J.carryT-=dt;if(ix&&Math.sign(ix)!==J.carryDir)J.carryT=0;else if(!ix&&!(typeof JOY!=='undefined'&&JOY.active))ix=J.carryDir*Math.min(1,J.carryT/.12+.15)}
- J.vx+=(ix*WK.run-J.vx)*Math.min(1,dt*(J.on?(G.st.ice?4.5:14):8));   // Frostpeak ice: slower grip on the ground
+ if(J.popT>0){J.popT-=dt;if(J.on||(ix&&Math.sign(ix)!==Math.sign(J.vx)))J.popT=0}   // v10 stomp pop-off: keep the sideways nudge briefly unless the player steers back
+ if(!(J.popT>0))J.vx+=(ix*WK.run-J.vx)*Math.min(1,dt*(J.on?(G.st.ice?4.5:14):8));   // Frostpeak ice: slower grip on the ground
  if(ix)J.dir=ix>0?1:-1;
  if(jump)J.jb=.15;J.jb-=dt;J.coy=J.on?.1:J.coy-dt;
  if(J.jb>0&&J.coy>0){J.vy=WK.jv;J.on=false;J.coy=0;J.jb=0;sfx('jump');wburst(J.x,J.y,5,'#cfd6e8',2)}
@@ -794,7 +812,7 @@ function updateWalkFoes(dt){const J=G.J,alive=J.dead<=0,sb=J.sw>.05&&alive?swing
   if(sb&&e.hit<=(e.k==='drone'?0:.28)&&e.lastSw!==J.swN&&e.x+e.w>sb.x0&&e.x-e.w<sb.x1&&ey1>sb.y0&&ey0<sb.y1){e.hp--;e.hit=.32;e.lastSw=J.swN;wburst(e.x,(ey0+ey1)/2,6,'#bfe8ff',3);
    if(e.hp<=0){e.dead=true;wpop(PTS[e.k],e.x,ey1);wburst(e.x,(ey0+ey1)/2,18);sfx('boom')}else{sfx('ping');if(e.k!=='drone'){e.x=clamp(e.x+J.dir*(e.k==='lord'?1.8:e.k==='knight'?1.3:.9),e.a,e.b);e.hit=e.k==='lord'?.8:.6;if(e.k==='lord')e.wind=0}}continue}
   if(alive&&J.x+WK.pw>e.x-e.w&&J.x-WK.pw<e.x+e.w&&J.y+WK.ph>ey0&&J.y<ey1){
-   if(J.vy<-1&&(J.y>ey0+e.h*.45||(J.py!=null&&J.py>=ey1-.3))&&e.k!=='drone'){J.vy=9;if(J.stE===e)e.hit=Math.max(e.hit,.12);else{e.hp--;if(e.hp<=0){e.dead=true;wpop(PTS[e.k],e.x,ey1);wburst(e.x,ey1,16);sfx('boom')}else{e.hit=.3;J.stE=e;sfx('ping')}}}   // v9: the bounce re-landing on the same foe is a harmless bounce, not a 2nd stomp
+   if(J.vy<-1&&(J.y>ey0+e.h*.45||(J.py!=null&&J.py>=ey1-.3))&&e.k!=='drone'){J.vy=9;if(J.stE===e){e.hit=Math.max(e.hit,.12);stompPop(J,e)}else{e.hp--;if(e.hp<=0){e.dead=true;wpop(PTS[e.k],e.x,ey1);wburst(e.x,ey1,16);sfx('boom')}else{e.hit=.3;J.stE=e;sfx('ping')}}}   // v9: the bounce re-landing on the same foe is a harmless bounce, not a 2nd stomp
    else if(e.k!=='drone'&&e.hit>0){J.inv=Math.max(J.inv,.5)}   // touching a foe you just hit (stunned) is safe, with a moment to step away
    else if(J.inv<=0){walkDie(e.k==='drone'?'Zapped by a drone!':WFOE[e.k]||'Bumped by a scrap bot!');return}}}
  for(const o of G.wO){if(o.g)o.vy-=o.g*dt;o.x+=o.vx*dt;o.y+=o.vy*dt;o.life-=dt;
@@ -809,7 +827,7 @@ function updateWalkFoes(dt){const J=G.J,alive=J.dead<=0,sb=J.sw>.05&&alive?swing
  G.wO=G.wO.filter(o=>o.life>0)}
 function walkDie(why){const J=G.J;if(J.dead>0)return;J.carryT=0;J.dead=1.6;G.lives--;wburst(J.x,J.y+1,26,'#9fe0ff',5);wburst(J.x,J.y+1,14);sfx('die');G.shake=.8;G.hitFlash=1;msg(why,1.8)}
 function walkRespawn(){const J=G.J;if(G.lives<=0){state='over';save.hi=Math.max(save.hi||0,G.score);persist();sfx('over');musicFor(null);return}
- const c=J.ck;Object.assign(J,{x:c.x,y:c.y+.05,vx:0,vy:0,dir:1,on:false,onP:null,inv:2.2,sw:0,swv:0,carryT:0,dead:0,stE:null});J.botTP=null;G.wO=[];
+ const c=J.ck;Object.assign(J,{x:c.x,y:c.y+.05,vx:0,vy:0,dir:1,on:false,onP:null,inv:2.2,sw:0,swv:0,carryT:0,dead:0,stE:null,popT:0});J.botTP=null;G.wO=[];
  for(const e of G.wE)if(!e.dead&&Math.abs(e.x-c.x)<3){if(e.k==='drone')e.t+=3;else if(e.k==='flamer'||e.k==='knight'){e.fireT=Math.max(e.fireT,2.5);e.wind=0}else e.x=e.b}msg('Get ready!',1.2)}
 // test/demo bot: run right, jump gaps/walls/foes, swing at anything close
 function walkBot(){const J=G.J;let j=false,s=false;const ahead=J.x+.9;
