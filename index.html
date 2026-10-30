@@ -123,7 +123,7 @@ function update(dt){
  for(const p of G.parts){p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;p.vy-=4*dt;p.life-=dt}G.parts=G.parts.filter(p=>p.life>0&&p.y>-.5);
  for(const p of G.pops)p.t-=dt*.8;G.pops=G.pops.filter(p=>p.t>0);for(const m of G.msgs)if(!m.wait)m.life-=dt;G.msgs=G.msgs.filter(m=>m.life>0);
  G.hitFlash=Math.max(0,G.hitFlash-dt*2);G.shake=Math.max(0,G.shake-dt*3);
- if(state==='intro'){G.introT-=dt;if(G.introT<=0){state='play';msg(G.st.k==='walk'?'Swipe to run. Tap JUMP and LAZORD!':G.st.k==='fort'?'Get low to shoot the fuel tanks!':'Line up your height with the raiders!',2.4)}return}
+ if(state==='intro'){if(G.story&&window.SkipBtn&&!SkipBtn.active())SkipBtn.show(()=>{if(state==='intro')G.introT=0},{while:()=>state==='intro',top:64});G.introT-=dt;if(G.introT<=0){state='play';msg(G.st.k==='walk'?'Swipe to run. Tap JUMP and LAZORD!':G.st.k==='fort'?'Get low to shoot the fuel tanks!':'Line up your height with the raiders!',2.4)}return}
  if(state==='clear'){G.clearT-=dt;if(G.st.k!=='walk')G.ship.z+=G.speed*dt;if(G.clearT<=0){const nx=G.si+1;if(nx%NST===0){state='win';sfx('win')}else startStage(nx)}return}
  if(state!=='play')return;
  if(G.st.k==='walk'){updateWalk(dt);return}
@@ -626,7 +626,7 @@ addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||e.targe
  if(G&&G.st&&G.st.k==='walk'&&state==='play'&&!e.repeat){if(e.code==='Space'||e.code==='ArrowUp'||e.code==='KeyW')INPUT.jumpE=true;if(e.code==='KeyJ'||e.code==='KeyK'||e.code==='KeyZ'||e.code==='KeyX')INPUT.strikeE=true}
  if(e.code==='KeyF'&&(state==='play'||state==='intro'))toggleAuto();
  if(e.code==='KeyM')toggleMute();
- if((e.code==='KeyP'||e.code==='Escape')){if(state==='play'||state==='intro')go('pause');else if(state==='pause')go('play')}
+ if((e.code==='KeyP'||e.code==='Escape')){if(state==='intro'){G.introT=0}else if(state==='play')go('pause');else if(state==='pause')go('play')}
  if(e.code==='Enter'||(e.code==='Space'&&state!=='play')){if(state==='title')startGame();else if(state==='over')startGame();else if(state==='win')startStage(G.si+1);else if(state==='intro')G.introT=0;else if(state==='pause')go('play')}});
 addEventListener('keyup',e=>{const k=KM[e.code];if(k){KEYS[k]=false;if((k==='l'||k==='r')&&G&&G.J&&G.st&&G.st.k==='walk'&&state==='play'&&performance.now()-(KEYS['t_'+k]||0)<300){G.J.carryDir=k==='r'?1:-1;G.J.carryT=.35}}});
 function keyInput(){let x=JOY.dx,y=-JOY.dy;if(Math.hypot(x,y)<.12){x=0;y=0}
@@ -1280,4 +1280,6 @@ GamepadSupport.init({
 });
 </script>
 <!-- gamepad:end -->
+<script src="studio-logo.js?v=1" data-src="studio-logo.webp" data-alt="five8nine Studios" data-when="state==='title'&amp;&amp;innerWidth&gt;innerHeight" data-corner="br" data-cornerl="br" data-h="30" data-hl="26"></script>
+<script src="skip-btn.js?v=1"></script>
 </body></html>
