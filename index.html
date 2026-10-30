@@ -499,7 +499,8 @@ function hudLayout(){const s=S(),m=Math.min(W,H),hb=clamp(m*.13,44,62),pad=8;con
  o.fuel=[tx,s.t+pad+hb*.56,Math.min(tw,240),Math.max(21,hb*.4)];
  // Chef Kelly layout: big main button bottom-right, second button to its left and a little higher
  const r1=clamp(m*.12,40,58);o.b1=[s.r-pad-r1-4,s.b-pad-r1-6,r1];const walk=!!(G&&G.st&&G.st.k==='walk');
- const r2=walk?r1:Math.max(36,r1*.8);o.b2=[o.b1[0]-r1-r2*1.25,o.b1[1]-r1*.45,r2];o.ctrlTop=Math.min(o.b2[1]-r2,o.b1[1]-r1)-10;
+ // Oct 30 (Peter): on foot, JUMP bottom-right and LAZORD bottom-left (mirrored, same size)
+ const r2=walk?r1:Math.max(36,r1*.8);o.b2=walk?[s.l+pad+r1+4,o.b1[1],r1]:[o.b1[0]-r1-r2*1.25,o.b1[1]-r1*.45,r2];o.ctrlTop=Math.min(o.b2[1]-r2,o.b1[1]-r1)-10;
  o.fire=o.b1;
  const gy0=s.t+pad+hb+14,gy1=s.b-150;o.alt=[s.l+pad+2,gy0,26,Math.max(60,Math.min(220,gy1-gy0))];
  o.top=s.t+pad+hb+6;o.bot=s.b-6;return o}
@@ -535,7 +536,7 @@ const lowF=G.fuel<25&&Math.floor(TIME*4)%2;ctx.fillStyle='rgba(0,0,0,.55)';rr(fx
  // swipe feedback (anchor ring + direction) and first-time hint
  if(JOY.active){ctx.globalAlpha=.55;ctx.strokeStyle='#8fd0ff';ctx.lineWidth=3;ctx.beginPath();ctx.arc(JOY.sx,JOY.sy,26,0,6.283);ctx.stroke();if(Math.hypot(JOY.dx,JOY.dy)>.2){const ex=JOY.sx+JOY.dx*44,ey=JOY.sy+JOY.dy*44;ctx.beginPath();ctx.moveTo(JOY.sx,JOY.sy);ctx.lineTo(ex,ey);ctx.stroke();circ(ex,ey,9,'#8fd0ff')}ctx.globalAlpha=1}
  else if(!window.__CAP&&state!=='intro'&&(!SWIPED||G.t<4)){const HL=walk?['👆 Swipe ◀ ▶','to run']:['👆 Swipe to steer','▲ up / ▼ down = height'],HS=20;ctx.font=font(HS);const need=Math.max(...HL.map(l=>ctx.measureText(l).width))+8;
-  const a0=o.s.l+8,a1=o.b2[0]-o.b2[2]-8;let hx,hy;if(walk&&o.s.w>o.s.h){hx=o.s.l+o.s.w*.45;hy=o.top+Math.max(64,(o.bot-o.top)*.3)}   // landscape on foot: up in the sky, clear of Jim and the ground
+  const a0=walk?o.b2[0]+o.b2[2]+8:o.s.l+8,a1=walk?o.b1[0]-o.b1[2]-8:o.b2[0]-o.b2[2]-8;let hx,hy;if(walk&&o.s.w>o.s.h){hx=o.s.l+o.s.w*.45;hy=o.top+Math.max(64,(o.bot-o.top)*.3)}   // landscape on foot: up in the sky, clear of Jim and the ground
   else if(a1-a0>=need){hx=a0+(a1-a0)/2;hy=o.b1[1]-12}else{hx=o.s.l+o.s.w/2;hy=o.ctrlTop-HS*2.2}
   ctx.globalAlpha=.9;HL.forEach((l,i)=>txt(null,l,hx,hy+i*(HS+5),HS,'#fff',null,o.s.w-16,{oc:'rgba(0,0,0,.8)'}));ctx.globalAlpha=1}
  const rb=(c,id,label,col,down)=>{const [x,y,r]=c;circ(x,y+3,r,'rgba(0,0,0,.35)');circ(x,y+(down?3:0),r,col);ctx.strokeStyle='#cfe8ff';ctx.lineWidth=3;ctx.beginPath();ctx.arc(x,y+(down?3:0),r,0,6.283);ctx.stroke();txt(null,label,x,y+(down?3:0),Math.max(17,Math.min(22,r*.4)),'#fff',null,Math.max(r*1.9,92));reg('btn:'+id,x-r,y-r,r*2,r*2+3)};
@@ -748,7 +749,7 @@ function genWalk(st,si){
  // Frostpeak / Magma: an early foe on the starting floor so the action starts within a few seconds
  if(st.early==='roller')G.wE.push({k:'roller',x:9.4,y:0,a:7.2,b:10.4,vx:-2.2,hp:1,w:.42,h:.84,t:0,hit:0});
  else if(st.early==='knight')G.wE.push({k:'knight',x:9.6,y:0,a:8.4,b:10.3,vx:-.5,hp:1,w:.38,h:1.55,t:0,hit:0,dir:-1,wind:0,fireT:2.2,rate:2.8});
- G.J={x:1.5,y:0,vx:0,vy:0,dir:1,on:true,onP:null,coy:0,jb:0,sw:0,swCd:0,inv:0,dead:0,anim:0,ck:CK[0]};G.endZ=1e9}
+ G.J={x:1.5,y:0,vx:0,vy:0,dir:1,on:true,onP:null,coy:0,jb:0,sw:0,swCd:0,inv:0,dead:0,anim:0,ck:CK[0]};G.endZ=1e9;G.rfSafe={x:1.5,y:0}}
 // ---------- WHITE KNIGHTS: blank white mannequin soldiers with laser guns (original design) ----------
 // Placed with their own RNG so the stage layouts stay the same. A few in stage 3, more in 5/7/8, a tougher squad in 10.
 function placeKnights(st,si){const n=st.kn||0;if(!n)return;const R=rng(seedOf(st,si)*7331+99),loop=G.loop,sq=!!st.knSquad;
@@ -799,6 +800,9 @@ function updateWalk(dt){const J=G.J;G.wt+=dt;
  if(J.vy<=0)for(const p of G.wP){if(J.x+WK.pw*.6>p.x0&&J.x-WK.pw*.6<p.x1&&py>=p.y-.02&&J.y<=p.y){J.y=p.y;J.vy=0;J.on=true;if(p.mx)J.onP=p}}
  if(J.on)J.stE=null;   // v9: back on solid footing -> the next stomp on that foe counts again
  J.swCd-=dt;if(strike&&J.swCd<=0){J.swN=(J.swN||0)+1;J.sw=.3;J.swv=.45;J.swCd=.34;sfx('swing')}J.sw=Math.max(0,J.sw-dt);J.swv=Math.max(0,(J.swv||0)-dt);J.inv=Math.max(0,J.inv-dt);J.anim+=Math.abs(J.vx)*dt;
+ // Oct 30 (Peter): remember safe ground, backed ~1.5 body widths off any pit edge; a fall while blinking costs nothing
+ if(J.on&&!J.onP&&J.dead<=0){const q=G.wS.find(q=>q.y0<-30&&J.x>=q.x0&&J.x<=q.x1&&Math.abs(J.y-q.y1)<.05);if(q&&q.x1-q.x0>2.2)G.rfSafe={x:clamp(J.x,q.x0+1,q.x1-1),y:q.y1}}
+ if(((G.st.lava&&J.y<-1.1)||J.y<-5)&&J.inv>0&&G.rfSafe){Object.assign(J,{x:G.rfSafe.x,y:G.rfSafe.y+.05,vx:0,vy:0,on:false,onP:null,carryT:0,popT:0,inv:Math.max(J.inv,1.2)});return}
  if(G.st.lava&&J.y<-1.1){walkDie('Too hot! Mind the lava!');return}
  if(J.y<-5){walkDie('Watch your step!');return}
  for(const c of G.wCK)if(!c.on&&J.x>c.x){c.on=true;J.ck=c;msg('Checkpoint!',1.2);sfx('fuel')}
@@ -838,7 +842,7 @@ function updateWalkFoes(dt){const J=G.J,alive=J.dead<=0,sb=J.sw>.05&&alive?swing
  G.wO=G.wO.filter(o=>o.life>0)}
 function walkDie(why){const J=G.J;if(J.dead>0)return;J.carryT=0;J.dead=1.6;G.lives--;wburst(J.x,J.y+1,26,'#9fe0ff',5);wburst(J.x,J.y+1,14);sfx('die');G.shake=.8;G.hitFlash=1;msg(why,1.8)}
 function walkRespawn(){const J=G.J;if(G.lives<=0){state='over';save.hi=Math.max(save.hi||0,G.score);persist();sfx('over');musicFor(null);return}
- const c=J.ck;Object.assign(J,{x:c.x,y:c.y+.05,vx:0,vy:0,dir:1,on:false,onP:null,inv:2.2,sw:0,swv:0,carryT:0,dead:0,stE:null,popT:0});J.botTP=null;G.wO=[];
+ const c=J.ck;G.rfSafe={x:c.x,y:c.y};Object.assign(J,{x:c.x,y:c.y+.05,vx:0,vy:0,dir:1,on:false,onP:null,inv:2.2,sw:0,swv:0,carryT:0,dead:0,stE:null,popT:0});J.botTP=null;G.wO=[];
  for(const e of G.wE)if(!e.dead&&Math.abs(e.x-c.x)<3){if(e.k==='drone')e.t+=3;else if(e.k==='flamer'||e.k==='knight'){e.fireT=Math.max(e.fireT,2.5);e.wind=0}else e.x=e.b}msg('Get ready!',1.2)}
 // test/demo bot: run right, jump gaps/walls/foes, swing at anything close
 function walkBot(){const J=G.J;let j=false,s=false;const ahead=J.x+.9;
