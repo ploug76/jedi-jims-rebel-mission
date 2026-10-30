@@ -343,10 +343,10 @@ function drawBucketonBoss(B,t){const X=B.x,z=B.z,q=BSC;if(!B.alive)ctx.globalAlp
  ctx.globalAlpha=1}
 // Lord Bucketon himself, drawn standing at (x,y)=feet, A = pixels per unit, d = facing. Short body, giant rounded bucket-dome helmet with one red eye-slit
 // and two antenna nubs, purple-and-black cape with a jagged-gear emblem, studded gloves, stubby laser pistol. open = visor lifted (taunt / weak spot).
-function drawBucketon(x,y,A,d,t,open,flash,aim,bt){ctx.save();ctx.translate(x,y);ctx.scale(d,1);const bob=Math.sin(bt*6)*A*.04,wob=Math.sin(bt*5.3)*.07;
+function drawBucketon(x,y,A,d,t,open,flash,aim,bt,gs){ctx.save();ctx.translate(x,y);ctx.scale(d,1);const g=gs||0,bob=Math.sin(bt*6)*A*.04,wob=Math.sin(bt*5.3)*.07;
  const rr3=(x0,y0,w,h,r,c)=>{ctx.fillStyle=c;ctx.beginPath();ctx.moveTo(x0+r,y0);ctx.arcTo(x0+w,y0,x0+w,y0+h,r);ctx.arcTo(x0+w,y0+h,x0,y0+h,r);ctx.arcTo(x0,y0+h,x0,y0,r);ctx.arcTo(x0,y0,x0+w,y0,r);ctx.fill()};
  // boots + tiny legs
- rr3(-A*.26,-A*.32,A*.18,A*.32,A*.05,'#15131c');rr3(A*.08,-A*.32,A*.18,A*.32,A*.05,'#15131c');rr3(-A*.32,-A*.08,A*.26,A*.1,A*.04,'#000');rr3(A*.06,-A*.08,A*.26,A*.1,A*.04,'#000');
+ {const ga=g*A*.1,l1=Math.max(0,g)*A*.07,l2=Math.max(0,-g)*A*.07;rr3(-A*.26+ga,-A*.32-l1,A*.18,A*.32,A*.05,'#15131c');rr3(A*.08-ga,-A*.32-l2,A*.18,A*.32,A*.05,'#15131c');rr3(-A*.32+ga,-A*.08-l1,A*.26,A*.1,A*.04,'#000');rr3(A*.06-ga,-A*.08-l2,A*.26,A*.1,A*.04,'#000')}
  // cape (purple lining + black outside) and tiny body
  ctx.fillStyle='#4a1f73';ctx.beginPath();ctx.moveTo(-A*.42,-A*.25);ctx.lineTo(A*.42,-A*.25);ctx.lineTo(A*.3,-A*.95);ctx.lineTo(-A*.3,-A*.95);ctx.fill();
  ctx.fillStyle='#17121f';ctx.beginPath();ctx.moveTo(-A*.5,-A*.2);ctx.lineTo(-A*.18,-A*.22);ctx.lineTo(-A*.2,-A*.95);ctx.lineTo(-A*.34,-A*.95);ctx.fill();
@@ -901,7 +901,7 @@ function drawWalk(o){const J=G.J,th=G.theme,{T,base}=walkView(o),s=o.s;const vis
    ctx.fillStyle=fl?'#fff':'#7a6260';ctx.beginPath();ctx.arc(x,y-h*.45,w*.42,Math.PI,0);ctx.fill();ctx.fillStyle='#3a2a28';ctx.fillRect(x-T*.1,y-h*1.05,T*.2,h*.4);
    ctx.save();ctx.shadowColor='#ff7a1a';ctx.shadowBlur=T*(pulse?.8:.35);circ(x,y-h*1.05,T*(pulse?.16:.11),pulse?'#ffe14a':'#ff7a1a');ctx.restore();ctx.fillStyle='#ffb040';ctx.fillRect(x-w*.3,y-h*.3,w*.6,h*.08)}
   else if(e.k==='knight'){drawKnight(x,y,T,e,fl)}
-  else if(e.k==='lord'){drawBucketon(x,y,T*.82,e.dir||-1,TIME,e.taunt>0,fl,e.wind>0,e.t);if(e.hp>0){for(let i=0;i<e.hp;i++)circ(x-(e.hp-1)*T*.12+i*T*.24,y-T*2.2,T*.08,'#ff4a5a')}}
+  else if(e.k==='lord'){drawBucketon(x,y,T*.82,e.dir||-1,TIME,e.taunt>0,fl,e.wind>0,e.t,wGait(e,7));if(e.hp>0){for(let i=0;i<e.hp;i++)circ(x-(e.hp-1)*T*.12+i*T*.24,y-T*2.2,T*.08,'#ff4a5a')}}
   else if(e.k==='drone'){const dc=th.name==='dunes'?'#3fa07a':th.name==='frost'?'#4a8fd8':'#7a4fd0';ctx.save();ctx.translate(x,y);ctx.fillStyle=fl?'#fff':dc;ctx.beginPath();ctx.ellipse(0,0,T*.45,T*.24,0,0,6.283);ctx.fill();ctx.fillStyle='#3a2470';ctx.fillRect(-T*.5,-T*.04,T,T*.08);
    const wv=Math.abs(Math.sin(TIME*30))*T*.35;ctx.fillStyle='rgba(220,220,255,.6)';ctx.fillRect(-T*.35-wv/2,-T*.36,wv,T*.05);ctx.fillRect(T*.35-wv/2,-T*.36,wv,T*.05);circ(0,T*.02,T*.12,'#ffe14a');circ(0,T*.02,T*.05,'#300');ctx.restore()}
   else{const big=e.k==='brute',w=e.w*T*2,h=e.h*T,dir=e.vx>0?1:-1;ctx.fillStyle=fl?'#fff':(big?'#d8742e':'#8f97a8');ctx.fillRect(x-w/2,y-h,w,h*.78);ctx.fillStyle='#2b3040';ctx.fillRect(x-w/2,y-h*.22,w,h*.22);
@@ -917,10 +917,12 @@ function drawWalk(o){const J=G.J,th=G.theme,{T,base}=walkView(o),s=o.s;const vis
  for(const p of G.pops)if(p.wx!=null){ctx.globalAlpha=clamp(p.t*1.5,0,1);txt(null,'+'+p.n,X(p.wx),Y(p.wy)-(1-p.t)*T*1.2-T*.3,17,'#ffe14a');ctx.globalAlpha=1}
  if(state==='clear'){const x=X(G.goalX),y=Y(G.goalY)-T*2.4;if(G.st.fin)drawLightRing(x,y,T*.75,RINGN,TIME,true);else drawRingPiece(x,y-(3.4-G.clearT)*T*.6,T*.7,G.si%NST,TIME)}}
 // White Knight: smooth blank mannequin (round featureless head, rounded limbs) in soft white/grey, holding an original stubby ray gun
-function drawKnight(x,y,T,e,fl){const u=T/10,d=e.dir||1,mv=e.wind<=0&&Math.abs(e.vx)>.01&&e.hit<=0,ph=mv?Math.sin(e.t*7):0,W1=fl?'#ffffff':'#f3f4f6',W2=fl?'#ffffff':'#d5d8de',W3='#b9bdc6';
+// leg gait (render-only): stride phase from distance actually walked, legs ease back to standing
+function wGait(e,k){const n=performance.now(),dt=Math.min(.1,(n-(e._gt||n))/1000);e._gt=n;const dx=e._gx===undefined?0:Math.min(.5,Math.abs(e.x-e._gx));e._gx=e.x;const mv=dx>1e-4;e._gp=(e._gp||0)+dx*k;e._ga=(e._ga||0)+((mv?1:0)-(e._ga||0))*Math.min(1,dt*10);if(!mv&&e._ga<.03){e._ga=0;e._gp=Math.round(e._gp/Math.PI)*Math.PI}return Math.sin(e._gp)*e._ga}
+function drawKnight(x,y,T,e,fl){const u=T/10,d=e.dir||1,ph=wGait(e,8),W1=fl?'#ffffff':'#f3f4f6',W2=fl?'#ffffff':'#d5d8de',W3='#b9bdc6';
  ctx.save();ctx.translate(Math.round(x),Math.round(y));ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(0,0,T*.42,T*.08,0,0,6.283);ctx.fill();ctx.scale(d,1);
  const rr2=(x0,y0,w,h,r,c)=>{ctx.fillStyle=c;ctx.beginPath();ctx.moveTo(x0+r,y0);ctx.arcTo(x0+w,y0,x0+w,y0+h,r);ctx.arcTo(x0+w,y0+h,x0,y0+h,r);ctx.arcTo(x0,y0+h,x0,y0,r);ctx.arcTo(x0,y0,x0+w,y0,r);ctx.fill()};
- for(const [ox,s] of [[-1.1,1],[1.1,-1]]){const lx=ox*u+ph*s*1.2*u;rr2(lx-1*u,-6.2*u,2*u,6*u,u,s>0?W2:W1);rr2(lx-1.2*u,-1.1*u,2.9*u,1.2*u,.6*u,W2)}
+ for(const [ox,s] of [[-1.1,1],[1.1,-1]]){const lx=ox*u+ph*s*1.2*u,ly=-Math.max(0,-ph*s)*.8*u;rr2(lx-1*u,-6.2*u+ly,2*u,6*u,u,s>0?W2:W1);rr2(lx-1.2*u,-1.1*u+ly,2.9*u,1.2*u,.6*u,W2)}
  rr2(-1.6*u,-11.6*u,1.6*u,5*u,.8*u,W3);rr2(-2.4*u,-12.4*u,4.8*u,6.8*u,2*u,W1);ctx.fillStyle='rgba(0,0,0,.07)';ctx.fillRect(.9*u,-12*u,1.4*u,6*u);
  const hy=-15.6*u;circ(0,hy,3.5*u,W1);ctx.fillStyle='rgba(0,0,0,.08)';ctx.beginPath();ctx.arc(.6*u,hy+.5*u,3.1*u,-.6,1.9);ctx.fill();circ(-1.2*u,hy-1.3*u,.9*u,'rgba(255,255,255,.9)');
  rr2(-.2*u,-11.2*u,4.6*u,1.6*u,.8*u,W2);const gx=4.2*u,gy=-11.6*u,glow=e.wind>0?1-e.wind/.6:0;
@@ -930,9 +932,9 @@ function drawKnight(x,y,T,e,fl){const u=T/10,d=e.dir||1,mv=e.wind<=0&&Math.abs(e
  ctx.restore()}
 // Jim on foot: pixel-built robe body + his pixel likeness head (cropped from jim.png, never a photo)
 function drawFootJim(x,y,T,J){const u=T/10,d=J.dir;ctx.save();ctx.translate(Math.round(x),Math.round(y));ctx.scale(d,1);
- const run=J.on&&Math.abs(J.vx)>.5,ph=Math.sin(J.anim*3.2),air=!J.on;
+ const run=J.on&&Math.abs(J.vx)>.5,air=!J.on,_n=performance.now(),_dt=Math.min(.1,(_n-(J._gt||_n))/1000);J._gt=_n;J._ga=(J._ga||0)+((run?1:0)-(J._ga||0))*Math.min(1,_dt*10);if(!run&&J._ga<.03)J._ga=0;const ga=J._ga,ph=Math.sin(J.anim*3.2)*ga,bo=1.2+.1*(1-ga);
  const leg=(ox,lift)=>{ctx.fillStyle='#cbb48a';ctx.fillRect(ox-1*u,-5*u-lift,2*u,3.4*u);ctx.fillStyle='#2a1a10';ctx.fillRect(ox-1.2*u,-2*u-lift,2.8*u,2*u)};
- if(air){leg(-1.3*u,1.2*u);leg(1.6*u,-.2*u)}else if(run){leg(-1.2*u+ph*1.6*u,Math.max(0,-ph)*u);leg(1.2*u-ph*1.6*u,Math.max(0,ph)*u)}else{leg(-1.3*u,0);leg(1.3*u,0)}
+ if(air){leg(-1.3*u,1.2*u);leg(1.6*u,-.2*u)}else if(ga>0){leg(-bo*u+ph*1.6*u,Math.max(0,-ph)*u);leg(bo*u-ph*1.6*u,Math.max(0,ph)*u)}else{leg(-1.3*u,0);leg(1.3*u,0)}
  // robe
  ctx.fillStyle='#5a3820';ctx.beginPath();ctx.moveTo(-3.4*u,-4.2*u);ctx.lineTo(3.6*u,-4.2*u);ctx.lineTo(2.9*u,-12*u);ctx.lineTo(-2.9*u,-12*u);ctx.closePath();ctx.fill();
  ctx.fillStyle='#e3d2a8';ctx.fillRect(-1.1*u,-12*u,2.6*u,6*u);ctx.fillStyle='#3a2414';ctx.fillRect(-2.9*u,-8*u,5.8*u,1.1*u);ctx.fillStyle='#c9a24a';ctx.fillRect(.2*u,-8*u,1*u,1.1*u);
