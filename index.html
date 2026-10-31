@@ -418,25 +418,46 @@ function button(id,x,y,w,h,label,col,cb,opt){opt=opt||{};const pr=BTNDOWN===id;c
  ctx.fillStyle=col;rr(x,y+(pr?3:0),w,h,Math.min(h/2,14));ctx.fill();ctx.strokeStyle=opt.stroke||'#bfe6ff';ctx.lineWidth=2.5;ctx.stroke();
  const f=fit(label,w-14,opt.sz||Math.min(h*.42,24));ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(label,x+w/2,y+h/2+(pr?3:0)+1);ctx.textBaseline='alphabetic';
  reg('btn:'+id,x,y,w,h+4);BTN.push({id,x,y,w,h:h+4,cb})}
-// ---------- Jedi Jim portrait ----------
-// SWAP POINT: the pilot art is the file jim.png (square, transparent background, head + shoulders, hero centered).
-// Replace that file to change the likeness everywhere (title, cockpit inset, win/lose screens, cover, icon).
-// JIM_HEAD is the head-only crop (x,y,size in jim.png pixels) used for the round cockpit inset.
-const JIM=new Image();let JIM_OK=false;JIM.onload=()=>{JIM_OK=true};JIM.src='jim.png';
-const JIM_HEAD=[92,8,200];
-function drawJim(cx,cy,R,mode){
- if(JIM_OK){ctx.imageSmoothingEnabled=false;if(mode==='head'){ctx.save();ctx.beginPath();ctx.arc(cx,cy,R,0,6.283);ctx.clip();ctx.drawImage(JIM,JIM_HEAD[0],JIM_HEAD[1],JIM_HEAD[2],JIM_HEAD[2],cx-R*1.08,cy-R*1.02,R*2.16,R*2.16);ctx.restore();ctx.imageSmoothingEnabled=true}
-  else ctx.drawImage(JIM,cx-R,cy-R,R*2,R*2);ctx.imageSmoothingEnabled=true;return}
- // fallback cartoon (if jim.png can't load): grey slicked hair, white beard, brown hooded robe
- ctx.save();if(mode==='head'){ctx.beginPath();ctx.arc(cx,cy,R,0,6.283);ctx.clip();R*=1.25;cy+=R*.25}
- const s=R/100;ctx.translate(cx,cy);ctx.scale(s,s);
- ctx.fillStyle='#3b2618';ctx.beginPath();ctx.ellipse(0,92,100,60,0,0,6.283);ctx.fill();ctx.fillStyle='#efe6cf';ctx.beginPath();ctx.moveTo(-30,40);ctx.lineTo(0,100);ctx.lineTo(30,40);ctx.lineTo(18,40);ctx.lineTo(0,80);ctx.lineTo(-18,40);ctx.fill();
- ctx.fillStyle='#f1b895';ctx.beginPath();ctx.ellipse(0,-10,48,54,0,0,6.283);ctx.fill();
- ctx.fillStyle='#e8e6e2';ctx.beginPath();ctx.ellipse(0,22,46,36,0,0,Math.PI);ctx.fill();ctx.beginPath();ctx.ellipse(0,18,44,20,0,0,6.283);ctx.fill();
- ctx.fillStyle='#fff';ctx.beginPath();ctx.ellipse(0,14,16,6,0,0,Math.PI);ctx.fill();ctx.strokeStyle='#5a3a2a';ctx.lineWidth=2;ctx.stroke();
- ctx.fillStyle='#8a8a8f';ctx.beginPath();ctx.ellipse(0,-50,46,22,0,Math.PI,0);ctx.fill();
- ctx.fillStyle='#e48a7a';ctx.beginPath();ctx.arc(-28,0,9,0,6.283);ctx.arc(28,0,9,0,6.283);ctx.fill();
- ctx.strokeStyle='#3a2a20';ctx.lineWidth=4;ctx.beginPath();ctx.arc(-17,-12,7,Math.PI*1.1,Math.PI*1.9);ctx.moveTo(10,-14);ctx.arc(17,-12,7,Math.PI*1.1,Math.PI*1.9);ctx.stroke();ctx.restore()}
+// ---------- Jedi Jim portrait (drawn cartoon, no photo) ----------
+const JIM_OK=false;
+// Drawn cartoon Jedi Jim (Oct 30 2026; replaces the photo-based jim.png): grey swept-back hair, short white beard, big smile, brown hooded robe.
+function jimPortrait(cx,cy,R,mode){ctx.save();if(mode==='head'){ctx.beginPath();ctx.arc(cx,cy,R,0,6.283);ctx.clip();R*=1.3;cy+=R*.3}
+ const s=R/100;ctx.translate(cx,cy);ctx.scale(s,s);const E=(x,y,rx,ry,c,a0,a1)=>{ctx.fillStyle=c;ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,a0||0,a1==null?6.283:a1);ctx.fill()};
+ // robe + hood folds + tunic
+ E(0,98,98,58,'#4a2c18');E(-52,70,40,34,'#5a3820');E(52,70,40,34,'#5a3820');
+ ctx.fillStyle='#3a2212';ctx.beginPath();ctx.moveTo(-70,46);ctx.quadraticCurveTo(0,20,70,46);ctx.lineTo(56,62);ctx.quadraticCurveTo(0,40,-56,62);ctx.closePath();ctx.fill();
+ ctx.fillStyle='#e8d7ae';ctx.beginPath();ctx.moveTo(-34,52);ctx.lineTo(0,100);ctx.lineTo(34,52);ctx.lineTo(20,50);ctx.lineTo(0,82);ctx.lineTo(-20,50);ctx.closePath();ctx.fill();
+ ctx.fillStyle='#4a2c18';ctx.beginPath();ctx.moveTo(-20,50);ctx.lineTo(0,82);ctx.lineTo(20,50);ctx.closePath();ctx.fill();
+ // neck, ears, face
+ E(0,40,20,16,'#d99a7c');E(-45,-4,9,13,'#e8a888');E(45,-4,9,13,'#e8a888');
+ E(0,-6,45,52,'#f1b895');E(-16,10,16,10,'rgba(230,120,110,.3)');E(16,10,16,10,'rgba(230,120,110,.3)');
+ // hair: grey, swept back, fuller at the sides
+ ctx.fillStyle='#9a9aa0';ctx.beginPath();ctx.moveTo(-46,-6);ctx.quadraticCurveTo(-52,-62,-6,-64);ctx.quadraticCurveTo(44,-66,48,-8);ctx.quadraticCurveTo(40,-40,10,-44);ctx.quadraticCurveTo(-30,-46,-46,-6);ctx.fill();
+ ctx.strokeStyle='#c8c8cc';ctx.lineWidth=3;for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(-28+i*16,-44);ctx.quadraticCurveTo(-18+i*14,-56,2+i*10,-56);ctx.stroke()}
+ // brows + smiling eyes
+ ctx.strokeStyle='#6a6a70';ctx.lineWidth=5;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-30,-22);ctx.quadraticCurveTo(-18,-30,-6,-24);ctx.moveTo(6,-24);ctx.quadraticCurveTo(18,-30,30,-22);ctx.stroke();
+ ctx.strokeStyle='#3a2a20';ctx.lineWidth=4;ctx.beginPath();ctx.arc(-18,-8,7,Math.PI*1.1,Math.PI*1.9);ctx.moveTo(11,-12);ctx.arc(18,-8,7,Math.PI*1.1,Math.PI*1.9);ctx.stroke();
+ // nose
+ ctx.strokeStyle='#d08a6c';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(2,-6);ctx.quadraticCurveTo(10,8,0,12);ctx.stroke();
+ // white beard + moustache with a big open smile
+ ctx.fillStyle='#ecebe6';ctx.beginPath();ctx.moveTo(-44,2);ctx.quadraticCurveTo(-46,46,0,50);ctx.quadraticCurveTo(46,46,44,2);ctx.quadraticCurveTo(36,26,0,26);ctx.quadraticCurveTo(-36,26,-44,2);ctx.fill();
+ E(-12,18,15,7,'#f4f3ef');E(12,18,15,7,'#f4f3ef');
+ ctx.fillStyle='#7a2a22';ctx.beginPath();ctx.moveTo(-16,24);ctx.quadraticCurveTo(0,44,16,24);ctx.closePath();ctx.fill();ctx.fillStyle='#fff';ctx.fillRect(-12,24,24,5);
+ ctx.restore()}
+// Jim's head on foot (u = body unit, flipped space: +x = facing). tu: 0 front .. 1 profile toward travel
+function jimFootHead(u,tu){const hy=-15.6*u,fx=tu*1.1*u;
+ // hair back, face, ear
+ ctx.fillStyle='#8a8a8f';ctx.beginPath();ctx.arc(-tu*.9*u,hy-.4*u,3.6*u,0,6.283);ctx.fill();
+ ctx.fillStyle='#f1b895';ctx.beginPath();ctx.ellipse(fx,hy+.2*u,3.3*u*(1-.12*tu),3.5*u,0,0,6.283);ctx.fill();
+ if(tu>.05){ctx.beginPath();ctx.moveTo(fx+2.6*u,hy-.6*u);ctx.lineTo(fx+(2.9+1.1*tu)*u,hy+.6*u);ctx.lineTo(fx+2.6*u,hy+1.2*u);ctx.fill();ctx.fillStyle='#e0a284';ctx.beginPath();ctx.ellipse(fx-1.6*u*tu,hy+.3*u,.7*u,1*u,0,0,6.283);ctx.fill()}
+ // hair top (swept back)
+ ctx.fillStyle='#9a9aa0';ctx.beginPath();ctx.ellipse(fx-.6*tu*u,hy-2.4*u,3.4*u,1.6*u,0,Math.PI,0);ctx.fill();ctx.fillRect(fx-3.4*u-tu*.6*u,hy-2.6*u,1.4*u+tu*1.2*u,2.8*u);
+ // eyes (far eye hidden in profile)
+ ctx.fillStyle='#2a1a10';const ex=fx+tu*1.3*u;if(tu<.6)ctx.fillRect(ex-1.6*u,hy-.4*u,.7*u,.7*u);ctx.fillRect(ex+(tu>.6?.7:1)*u,hy-.4*u,.7*u,.7*u);
+ // white beard on the lower face, toward the front when turned
+ ctx.fillStyle='#e8e6e2';ctx.beginPath();ctx.ellipse(fx+tu*.8*u,hy+2.1*u,3*u*(1-.2*tu),1.9*u,0,0,Math.PI);ctx.fill();ctx.fillRect(fx-3*u*(1-.2*tu)+tu*.8*u,hy+1.1*u,6*u*(1-.2*tu),1.1*u);
+ ctx.fillStyle='#7a2a22';ctx.fillRect(ex-.6*u+tu*.5*u,hy+1.6*u,1.6*u,.5*u)}
+function drawJim(cx,cy,R,mode){jimPortrait(cx,cy,R,mode)}
 function blade(x0,y0,x1,y1,w){const g=ctx.createLinearGradient(x0,y0,x1,y1);ctx.lineCap='round';
  ctx.strokeStyle='rgba(60,140,255,.25)';ctx.lineWidth=w*3.2;ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x1,y1);ctx.stroke();
  ctx.strokeStyle='rgba(90,170,255,.6)';ctx.lineWidth=w*1.7;ctx.stroke();ctx.strokeStyle='#eef8ff';ctx.lineWidth=w*.7;ctx.stroke();
@@ -447,7 +468,7 @@ function jimCard(k,x,y,w,h,sad){const R=Math.min(w,h)/2;const cx=x+w/2,cy=y+h/2;
  const g=ctx.createRadialGradient(cx,cy-R*.2,R*.1,cx,cy,R*1.4);g.addColorStop(0,sad?'#3a3f6a':'#2f6cc4');g.addColorStop(1,'#0a0f2e');ctx.fillStyle=g;ctx.fillRect(cx-R,cy-R,R*2,R*2);
  ctx.globalAlpha=.18;ctx.fillStyle='#9fd0ff';for(let i=0;i<10;i++){const a=TIME*.25+i*.628;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,R*2,a,a+.25);ctx.fill()}ctx.globalAlpha=1;
  drawJim(cx,cy+R*.08,R*.98,'full');
- if(!sad&&!JIM_OK)blade(cx+R*.7,cy+R*.98,cx+R*.9,cy-R*.95,Math.max(2,R*.035));
+ if(!sad)blade(cx+R*.7,cy+R*.98,cx+R*.9,cy-R*.95,Math.max(2,R*.035));
  ctx.restore();ctx.strokeStyle='#8fd0ff';ctx.lineWidth=3;rr(cx-R,cy-R,R*2,R*2,R*.18);ctx.stroke();if(k)reg(k,cx-R,cy-R,R*2,R*2)}
 function logo(x,y,w,maxH){const h1=Math.min(maxH*.3,w*.12),h2=Math.min(maxH*.42,w*.15);
  txt('logo1',"JEDI JIM'S",x,y+h1*.6,h1,'#bfe6ff',null,w,{oc:'#0b1f4a'});
@@ -860,7 +881,7 @@ function walkBot(){const J=G.J;let j=false,s=false;const ahead=J.x+.9;
  if(!J.on&&J.vy<0&&!J.botTP){const below=G.wS.some(q=>J.x>q.x0&&J.x<q.x1&&q.y1<=J.y)||G.wP.some(p=>J.x>p.x0&&J.x<p.x1&&p.y<=J.y);if(!below)x=1}
  return{x,j,s}}
 // ---------- drawing ----------
-const WCROP=[80,12,226];
+
 function walkView(o){const s=o.s,port=s.h>s.w*1.05,T=clamp(Math.min(s.w/(port?9.5:11),(o.bot-o.top)/9.2),26,64);const base=port?Math.min(o.bot-T*1.1,o.ctrlTop-T*.15):o.bot-T*1.1;return{T,base}}
 function drawWalk(o){const J=G.J,th=G.theme,{T,base}=walkView(o),s=o.s;const visW=s.w/T;
  const tx=J.x-visW*.36,ty=Math.max(0,J.y-2.2);G.camX+=(Math.max(-6.5,tx)-G.camX)*Math.min(1,.12);G.camY+=(ty-G.camY)*.08;
@@ -937,7 +958,7 @@ function drawKnight(x,y,T,e,fl){const u=T/10,d=e.dir||1,ph=wGait(e,11),W1=fl?'#f
  ctx.save();if(glow>0){ctx.shadowColor='#ff3b6b';ctx.shadowBlur=T*(.3+glow*.9)}circ(gx+3*u,gy-.25*u,(.45+glow*.55)*u,glow>0?(glow>.5?'#ffe0e8':'#ff7a98'):'#c33a5a');ctx.restore();
  if(e.hp>1){ctx.fillStyle='#7fc8ff';ctx.fillRect(-2.4*u,-9.8*u,4.8*u,.7*u)}
  ctx.restore()}
-// Jim on foot: pixel-built robe body + his pixel likeness head (cropped from jim.png, never a photo)
+// Jim on foot: pixel-built robe body + drawn head that turns to profile when he runs (facing check Oct 30 2026)
 function drawFootJim(x,y,T,J){const u=T/10,d=J.dir;ctx.save();ctx.translate(Math.round(x),Math.round(y));ctx.scale(d,1);
  const run=J.on&&Math.abs(J.vx)>.5,air=!J.on,_n=performance.now(),_dt=Math.min(.1,(_n-(J._gt||_n))/1000);J._gt=_n;J._ga=(J._ga||0)+((run?1:0)-(J._ga||0))*Math.min(1,_dt*10);if(!run&&J._ga<.03)J._ga=0;const ga=J._ga,ph=Math.sin(J.anim*1.55)*ga,/* cadence ~2.75 steps/s at full run (was ~5.4) */bo=1.2+.1*(1-ga);
  const leg=(ox,lift)=>{ctx.fillStyle='#cbb48a';ctx.fillRect(ox-1*u,-5*u-lift,2*u,3.4*u);ctx.fillStyle='#2a1a10';ctx.fillRect(ox-1.2*u,-2*u-lift,2.8*u,2*u)};
@@ -958,8 +979,7 @@ function drawFootJim(x,y,T,J){const u=T/10,d=J.dir;ctx.save();ctx.translate(Math
  lazord(hx,hy,bx,by,Math.max(2,u*.9));
  {const sx=1.7*u,sy=-10.9*u,dx=hx-sx,dy=hy-sy,dd=Math.hypot(dx,dy)||1,L1=2.3*u,h2=Math.max(0,L1*L1-dd*dd/4),hh=Math.sqrt(h2),ex=sx+dx/2-dy/dd*hh*.9,ey=sy+dy/2+dx/dd*hh*.9;arm2s(sx,sy,ex,ey,hx,hy,1.9*u,'#5a3820')}ctx.fillStyle='#f1b895';circ(hx,hy,u*.9,'#f1b895');
  // head (pixel likeness)
- const hs=8.4*u;if(JIM_OK){ctx.imageSmoothingEnabled=false;ctx.drawImage(JIM,WCROP[0],WCROP[1],WCROP[2],WCROP[2],-hs/2+.3*u,-12*u-hs*.92,hs,hs);ctx.imageSmoothingEnabled=true}
- else{circ(0,-15.5*u,3.4*u,'#f1b895');ctx.fillStyle='#8a8a8f';ctx.fillRect(-3*u,-19*u,6*u,1.6*u);ctx.fillStyle='#e8e6e2';ctx.fillRect(-2.6*u,-14.6*u,5.2*u,2.4*u)}
+ {const tu=Math.min(1,Math.max(ga*1.5,air&&Math.abs(J.vx)>.5?1:0));jimFootHead(u,tu)}
  ctx.restore()}
 // the Lazord: Jim's laser-sword (cyan-white beam, gold hilt)
 function lazord(x0,y0,x1,y1,w){ctx.lineCap='round';ctx.strokeStyle='rgba(70,230,255,.25)';ctx.lineWidth=w*3.4;ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x1,y1);ctx.stroke();ctx.strokeStyle='rgba(110,240,255,.7)';ctx.lineWidth=w*1.8;ctx.stroke();ctx.strokeStyle='#f2ffff';ctx.lineWidth=w*.8;ctx.stroke();
