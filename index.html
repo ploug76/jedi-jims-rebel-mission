@@ -514,14 +514,32 @@ function drawHow(){const s=S();drawSky(TIME,2);const pw=Math.min(s.w-24,560),ph=
  const by=y+ph-bh-14,bw=(pw-48)/2;
  button('hb',x+16,by,bw,bh,howPage?'◀ Back':'◀ Exit','#4a3f8a',()=>{if(howPage)howPage--;else go(prevState==='pause'?'pause':'title')});
  button('hn',x+pw-16-bw,by,bw,bh,howPage<HOW.length-1?'Next ▶':'Got it!','#1f9d55',()=>{if(howPage<HOW.length-1)howPage++;else go(prevState==='pause'?'pause':'title')})}
+/* Peter's button cluster (Oct 30 2026): JUMP big orange bottom-right, second button smaller green just left of it and a bit higher */
+function __pbGeo(W,H,SA){SA=SA||{l:0,r:0,t:0,b:0};let big,sm,J,O;
+ if(H>W*1.05){const ph=H*.33;big=Math.min(124,Math.max(92,ph*.36));sm=Math.round(big*.84);const bot=Math.min(46,Math.max(18,ph*.14))+(SA.b||0);
+  J=[W-(SA.r||0)-16-big/2,H-bot-big/2,big/2];O=[W-(SA.r||0)-16-big-14-sm/2,H-bot-big*.42-sm/2,sm/2]}
+ else{big=Math.min(96,Math.max(72,H*.21));sm=Math.round(big*.82);const bot=12+(SA.b||0);
+  J=[W-(SA.r||0)-14-big/2,H-bot-big/2,big/2];O=[W-(SA.r||0)-14-big-10-sm/2,H-bot-big*.18-sm/2,sm/2]}
+ return{J,O,big,sm}}
+function __pbHit(g,x,y){const dj=Math.hypot(x-g.J[0],y-g.J[1]),dob=Math.hypot(x-g.O[0],y-g.O[1]);
+ if(dj<g.J[2]*1.6||dob<g.O[2]*1.6)return dj/g.J[2]<=dob/g.O[2]?'J':'O';return null}
+function __pbDraw(ctx,c,label,orange,down,big){const x=c[0],r=c[2],y=c[1]+(down?3:0),fx=x-r*.3,fy=y-r*.4;ctx.save();
+ ctx.shadowColor=orange?'rgba(255,154,58,.6)':'rgba(80,208,96,.6)';ctx.shadowBlur=orange?22:18;
+ const g=ctx.createRadialGradient(fx,fy,0,fx,fy,r*1.55);
+ if(orange){g.addColorStop(0,down?'#fff0d0':'#ffe0b0');g.addColorStop(.55*.7,'#ff8a1a');g.addColorStop(1,'#a03a00')}else{g.addColorStop(0,down?'#efffe8':'#d8ffd0');g.addColorStop(.55*.7,'#38b040');g.addColorStop(1,'#0a5a12')}
+ ctx.beginPath();ctx.arc(x,y,r,0,6.283);ctx.fillStyle=g;ctx.fill();ctx.shadowBlur=0;ctx.shadowColor='transparent';
+ const s=ctx.createLinearGradient(0,y+r*.35,0,y+r);s.addColorStop(0,'rgba(0,0,0,0)');s.addColorStop(1,'rgba(0,0,0,.35)');ctx.fillStyle=s;ctx.fill();
+ ctx.lineWidth=3;ctx.strokeStyle='#fff';ctx.stroke();
+ let fs=(orange?.30:.24)*(big||r*2);ctx.font='900 '+fs+'px sans-serif';const mw=r*1.8,tw=ctx.measureText(label).width;if(tw>mw){fs*=mw/tw;ctx.font='900 '+fs+'px sans-serif'}
+ ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineJoin='round';ctx.lineWidth=fs*.22;ctx.strokeStyle='#000';ctx.strokeText(label,x,y+1);ctx.fillStyle='#fff';ctx.fillText(label,x,y+1);ctx.restore()}
 function hudLayout(){const s=S(),m=Math.min(W,H),hb=clamp(m*.13,44,62),pad=8;const o={s,hb};
  o.inset=[s.l+pad,s.t+pad,hb,hb];o.pause=[s.r-pad-44,s.t+pad,44,44];o.mute=[s.r-pad-44-8-44,s.t+pad,44,44];
  const tx=s.l+pad+hb+10,tw=Math.max(60,o.mute[0]-8-tx);o.text=[tx,s.t+pad,tw,hb];
  o.fuel=[tx,s.t+pad+hb*.56,Math.min(tw,240),Math.max(21,hb*.4)];
  // Chef Kelly layout: big main button bottom-right, second button to its left and a little higher
  const r1=clamp(m*.12,40,58);o.b1=[s.r-pad-r1-4,s.b-pad-r1-6,r1];const walk=!!(G&&G.st&&G.st.k==='walk');
- // Oct 30 (Peter): on foot, JUMP bottom-right and LAZORD bottom-left (mirrored, same size)
- const r2=walk?r1:Math.max(36,r1*.8);o.b2=walk?[s.l+pad+r1+4,o.b1[1],r1]:[o.b1[0]-r1-r2*1.25,o.b1[1]-r1*.45,r2];o.ctrlTop=Math.min(o.b2[1]-r2,o.b1[1]-r1)-10;
+ // Oct 30 9:45 PM (Peter's reference): on foot, JUMP big orange bottom-right, LAZORD smaller green just left of it and a bit higher
+ const r2=Math.max(36,r1*.8);o.b2=[o.b1[0]-r1-r2*1.25,o.b1[1]-r1*.45,r2];if(walk){const g=__pbGeo(W,H,SAFE);o.b1=g.J;o.b2=g.O;o.pbBig=g.big}o.ctrlTop=Math.min(o.b2[1]-o.b2[2],o.b1[1]-o.b1[2])-10;
  o.fire=o.b1;
  const gy0=s.t+pad+hb+14,gy1=s.b-150;o.alt=[s.l+pad+2,gy0,26,Math.max(60,Math.min(220,gy1-gy0))];
  o.top=s.t+pad+hb+6;o.bot=s.b-6;return o}
@@ -557,12 +575,12 @@ const lowF=G.fuel<25&&Math.floor(TIME*4)%2;ctx.fillStyle='rgba(0,0,0,.55)';rr(fx
  // swipe feedback (anchor ring + direction) and first-time hint
  if(JOY.active){ctx.globalAlpha=.55;ctx.strokeStyle='#8fd0ff';ctx.lineWidth=3;ctx.beginPath();ctx.arc(JOY.sx,JOY.sy,26,0,6.283);ctx.stroke();if(Math.hypot(JOY.dx,JOY.dy)>.2){const ex=JOY.sx+JOY.dx*44,ey=JOY.sy+JOY.dy*44;ctx.beginPath();ctx.moveTo(JOY.sx,JOY.sy);ctx.lineTo(ex,ey);ctx.stroke();circ(ex,ey,9,'#8fd0ff')}ctx.globalAlpha=1}
  else if(!window.__CAP&&state!=='intro'&&(!SWIPED||G.t<4)){const HL=walk?['👆 Swipe ◀ ▶','to run']:['👆 Swipe to steer','▲ up / ▼ down = height'],HS=20;ctx.font=font(HS);const need=Math.max(...HL.map(l=>ctx.measureText(l).width))+8;
-  const a0=walk?o.b2[0]+o.b2[2]+8:o.s.l+8,a1=walk?o.b1[0]-o.b1[2]-8:o.b2[0]-o.b2[2]-8;let hx,hy;if(walk&&o.s.w>o.s.h){hx=o.s.l+o.s.w*.45;hy=o.top+Math.max(64,(o.bot-o.top)*.3)}   // landscape on foot: up in the sky, clear of Jim and the ground
+  const a0=o.s.l+8,a1=o.b2[0]-o.b2[2]-8;let hx,hy;if(walk&&o.s.w>o.s.h){hx=o.s.l+o.s.w*.45;hy=o.top+Math.max(64,(o.bot-o.top)*.3)}   // landscape on foot: up in the sky, clear of Jim and the ground
   else if(a1-a0>=need){hx=a0+(a1-a0)/2;hy=o.b1[1]-12}else{hx=o.s.l+o.s.w/2;hy=o.ctrlTop-HS*2.2}
   ctx.globalAlpha=.9;HL.forEach((l,i)=>txt(null,l,hx,hy+i*(HS+5),HS,'#fff',null,o.s.w-16,{oc:'rgba(0,0,0,.8)'}));ctx.globalAlpha=1}
  const rb=(c,id,label,col,down)=>{const [x,y,r]=c;circ(x,y+3,r,'rgba(0,0,0,.35)');circ(x,y+(down?3:0),r,col);ctx.strokeStyle='#cfe8ff';ctx.lineWidth=3;ctx.beginPath();ctx.arc(x,y+(down?3:0),r,0,6.283);ctx.stroke();txt(null,label,x,y+(down?3:0),Math.max(17,Math.min(22,r*.4)),'#fff',null,Math.max(r*1.9,92));reg('btn:'+id,x-r,y-r,r*2,r*2+3)};
  if(window.__CAP){}   // cover capture only: hide the on-screen buttons
- else if(walk){rb(o.b1,'jump','JUMP',BTNP.jump?'#2fb56a':'rgba(31,157,85,.85)',BTNP.jump);rb(o.b2,'lazord','LAZORD',BTNP.lazord?'#18a9c9':'rgba(20,140,190,.85)',BTNP.lazord)}
+ else if(walk){__pbDraw(ctx,o.b1,'JUMP',1,BTNP.jump,o.pbBig);reg('btn:jump',o.b1[0]-o.b1[2],o.b1[1]-o.b1[2],o.b1[2]*2,o.b1[2]*2+3);__pbDraw(ctx,o.b2,'LAZORD',0,BTNP.lazord,o.pbBig);reg('btn:lazord',o.b2[0]-o.b2[2],o.b2[1]-o.b2[2],o.b2[2]*2,o.b2[2]*2+3)}
  else{const fdown=!!FIREP||KEYS.fire;rb(o.b1,'fire','FIRE',fdown?'#2a7bd9':'rgba(42,110,217,.85)',fdown);rb(o.b2,'auto','',AUTO?'#1f9d55':'rgba(40,40,70,.85)',false);txt(null,'AUTO',o.b2[0],o.b2[1]-9,17,'#fff');txt(null,AUTO?'ON':'OFF',o.b2[0],o.b2[1]+11,16,AUTO?'#d8ffd8':'#c8c8e0')}
  // messages
  for(const m of G.msgs){if(m.wait)continue;ctx.globalAlpha=clamp(m.life*2,0,1);let mt=m.t,my=o.top+(G.bossOn?60:G.st.k==='space'?44:18);const mw=o.s.w*.9,msz=Math.max(17,Math.min(20,o.s.w/22));ctx.font=font(msz);
@@ -618,8 +636,9 @@ cv.addEventListener('pointerdown',e=>{e.preventDefault();audioInit();const x=e.c
  if(state==='intro'&&G&&G.introT<(G.story?3.6:2.2)){G.introT=0}
  if((state==='play'||state==='intro')&&G){const o=hudLayout(),walk=G.st.k==='walk';
   for(const b of BTN)if((b.id==='pause'||b.id==='mute')&&x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h){PTR[e.pointerId]={k:'btn',b};BTNDOWN=b.id;return}
-  if(inCircle(o.b1,x,y,14)){if(walk){INPUT.jumpE=true;BTNP.jump=true;PTR[e.pointerId]={k:'jump'}}else{FIREP=e.pointerId;INPUT.fire=true;PTR[e.pointerId]={k:'fire'}}return}
-  if(inCircle(o.b2,x,y,10)){if(walk){INPUT.strikeE=true;BTNP.lazord=true;PTR[e.pointerId]={k:'lazord'}}else{toggleAuto();PTR[e.pointerId]={k:'auto'}}return}
+  const pbh=walk?__pbHit({J:o.b1,O:o.b2},x,y):null;
+  if(walk?pbh==='J':inCircle(o.b1,x,y,14)){if(walk){INPUT.jumpE=true;BTNP.jump=true;PTR[e.pointerId]={k:'jump'}}else{FIREP=e.pointerId;INPUT.fire=true;PTR[e.pointerId]={k:'fire'}}return}
+  if(walk?pbh==='O':inCircle(o.b2,x,y,10)){if(walk){INPUT.strikeE=true;BTNP.lazord=true;PTR[e.pointerId]={k:'lazord'}}else{toggleAuto();PTR[e.pointerId]={k:'auto'}}return}
   // swipe-to-move: a finger down anywhere else steers (flying: left/right + height; on foot: run left/right)
   if(!JOY.active){Object.assign(JOY,{active:true,id:e.pointerId,bx:x,by:y,sx:x,sy:y,dx:0,dy:0,seg:false,t0:performance.now()});PTR[e.pointerId]={k:'joy'};if(G.J)G.J.carryT=0}
   return}
